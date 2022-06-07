@@ -489,11 +489,11 @@ bool gfx_thumbnail_set_content_playlist(
             core_name, sizeof(path_data->content_core_name));
    
    /* Get content label */
-   if (!string_is_empty(content_label))
-      strlcpy(path_data->content_label,
-            content_label, sizeof(path_data->content_label));
-   else
-      fill_short_pathname_representation(path_data->content_label,
+   // if (!string_is_empty(content_label))
+   //    strlcpy(path_data->content_label,
+   //          content_label, sizeof(path_data->content_label));
+   // else
+      fill_short_pathname_representation(path_data->content_label,/*缩略图读取由label改为文件名，以便switch端显示中文的同时能显示缩略图*/
             content_path, sizeof(path_data->content_label));
    
    /* Determine content image name */
