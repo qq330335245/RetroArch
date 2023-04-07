@@ -1099,7 +1099,11 @@ static video_poke_interface_t xv_video_poke_interface = {
    NULL,
    NULL,
    NULL,
+#ifdef HAVE_XF86VM
    x11_get_refresh_rate,
+#else
+   NULL,
+#endif
    NULL,
    NULL,
    NULL,
@@ -1153,9 +1157,6 @@ video_driver_t video_xvideo = {
    NULL, /* read_frame_raw */
 #ifdef HAVE_OVERLAY
   NULL, /* overlay_interface */
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
   xv_get_poke_interface
 };

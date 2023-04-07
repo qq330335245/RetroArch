@@ -25,18 +25,17 @@
 
 #include "../gfx_display.h"
 
-#include "../../retroarch.h"
 #include "../common/d3d_common.h"
 #include "../common/d3d9_common.h"
 
-static const float d3d9_cg_vertexes[] = {
+static const float d3d9_cg_vertexes[8] = {
    0, 0,
    1, 0,
    0, 1,
    1, 1
 };
 
-static const float d3d9_cg_tex_coords[] = {
+static const float d3d9_cg_tex_coords[8] = {
    0, 1,
    1, 1,
    0, 0,
@@ -55,7 +54,7 @@ static const float *gfx_display_d3d9_cg_get_default_tex_coords(void)
 
 static void *gfx_display_d3d9_cg_get_default_mvp(void *data)
 {
-   static float id[] =         { 1.0f, 0.0f, 0.0f, 0.0f,
+   static float id[16] =       { 1.0f, 0.0f, 0.0f, 0.0f,
                                  0.0f, 1.0f, 0.0f, 0.0f,
                                  0.0f, 0.0f, 1.0f, 0.0f, 
                                  0.0f, 0.0f, 0.0f, 1.0f
@@ -264,20 +263,6 @@ static void gfx_display_d3d9_cg_draw_pipeline(gfx_display_ctx_draw_t *draw,
    }
 }
 
-static bool gfx_display_d3d9_cg_font_init_first(
-      void **font_handle, void *video_data,
-      const char *font_path, float menu_font_size,
-      bool is_threaded)
-{
-   font_data_t **handle = (font_data_t**)font_handle;
-   if (!(*handle = font_driver_init_first(video_data,
-         font_path, menu_font_size, true,
-         is_threaded,
-         FONT_DRIVER_RENDER_D3D9_API)))
-		 return false;
-   return true;
-}
-
 void gfx_display_d3d9_cg_scissor_begin(
       void *data,
       unsigned video_width, unsigned video_height,
@@ -286,7 +271,7 @@ void gfx_display_d3d9_cg_scissor_begin(
    RECT rect;
    d3d9_video_t *d3d9 = (d3d9_video_t*)data;
 
-   if (!d3d9 || !width || !height)
+   if (!d3d9)
       return;
 
    rect.left          = x;
@@ -322,7 +307,7 @@ gfx_display_ctx_driver_t gfx_display_ctx_d3d9_cg = {
    gfx_display_d3d9_cg_get_default_mvp,
    gfx_display_d3d9_cg_get_default_vertices,
    gfx_display_d3d9_cg_get_default_tex_coords,
-   gfx_display_d3d9_cg_font_init_first,
+   FONT_DRIVER_RENDER_D3D9_API,
    GFX_VIDEO_DRIVER_DIRECT3D9_CG,
    "d3d9_cg",
    false,

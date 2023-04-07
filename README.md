@@ -178,8 +178,8 @@ Your videocard needs to at least support the OpenGL 3.2 core feature spec.
 ***Menu driver support:*** MaterialUI, XMB, Ozone and RGUI should all work correctly.
 
 ### Direct3D 11 ###
-Your vudeocard needs to least supports Direct3D11 Feature Level 11.0. The card
-also needs to support at least Shader Model 4.0.
+Your videocard needs to at least support the Direct3D11 11.0 spec. The card
+also needs to support at least the Shader Model 4.0.
 
 ***Shaders:*** You will be able to use modern Slang shaders with this driver.
 
@@ -202,7 +202,7 @@ A sample configuration file is installed to `/etc/retroarch.cfg`. This is the sy
 RetroArch will on startup create a config file in `$XDG\_CONFIG\_HOME/retroarch/retroarch.cfg` if it does not exist.
 Users only need to configure a certain option if the desired value deviates from the value defined in config.def.h.
 
-To configure joypads, use the built-in menu or the `retroarch-joyconfig` command-line tool.
+To configure joypads, use the built-in menu or manually configure them in `retroarch.cfg`.
 
 ## Compiling and installing
 

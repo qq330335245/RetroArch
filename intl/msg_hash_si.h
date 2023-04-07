@@ -117,6 +117,8 @@ MSG_HASH(
 /* Settings */
 
 
+/* Core option category placeholders for icons */
+
 #ifdef HAVE_MIST
 #endif
 
@@ -182,6 +184,8 @@ MSG_HASH(
 
 #if defined(HAVE_DINPUT) || defined(HAVE_WINRAWINPUT)
 #endif
+#ifdef ANDROID
+#endif
 
 /* Settings > Input > Haptic Feedback/Vibration */
 
@@ -189,8 +193,17 @@ MSG_HASH(
 /* Settings > Input > Menu Controls */
 
 
-
 /* Settings > Input > Hotkeys */
+
+
+
+
+
+
+
+
+
+
 
 
 /* Settings > Input > Port # Controls */
@@ -253,6 +266,8 @@ MSG_HASH(
 
 /* Settings > User Interface */
 
+#ifdef _3DS
+#endif
 
 /* Settings > User Interface > Menu Item Visibility */
 
@@ -282,6 +297,12 @@ MSG_HASH(
 /* Settings > Power Management */
 
 /* Settings > Achievements */
+
+
+/* Settings > Achievements > Appearance */
+
+
+/* Settings > Achievements > Visibility */
 
 
 /* Settings > Network */
@@ -506,7 +527,7 @@ MSG_HASH(
 #ifdef HAVE_ODROIDGO2
 #else
 #endif
-#if defined(_3DS)
+#ifdef _3DS
 #endif
 #ifdef HAVE_QT
 #endif

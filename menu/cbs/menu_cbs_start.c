@@ -31,6 +31,7 @@
 #endif
 
 #include "../../configuration.h"
+#include "../../file_path_special.h"
 #include "../../core.h"
 #include "../../core_info.h"
 #include "../../core_option_manager.h"
@@ -102,6 +103,22 @@ static int action_start_remap_file_info(
    return 0;
 }
 
+static int action_start_override_file_info(
+      const char *path, const char *label,
+      unsigned type, size_t idx, size_t entry_idx)
+{
+   rarch_system_info_t *system           = &runloop_state_get_ptr()->system;
+   bool refresh                          = false;
+
+   config_load_override(system);
+
+   /* Refresh menu */
+   menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+   menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+
+   return 0;
+}
+
 static int action_start_shader_preset(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
@@ -119,6 +136,40 @@ static int action_start_shader_preset(
    return 0;
 }
 
+static int action_start_shader_preset_prepend(
+   const char* path, const char* label,
+   unsigned type, size_t idx, size_t entry_idx)
+{
+#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
+   bool refresh = false;
+   struct video_shader* shader = menu_shader_get();
+
+   shader->passes = 0;
+
+   menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+   menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+   command_event(CMD_EVENT_SHADERS_APPLY_CHANGES, NULL);
+#endif
+   return 0;
+}
+
+static int action_start_shader_preset_append(
+   const char* path, const char* label,
+   unsigned type, size_t idx, size_t entry_idx)
+{
+#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_SLANG) || defined(HAVE_HLSL)
+   bool refresh = false;
+   struct video_shader* shader = menu_shader_get();
+
+   shader->passes = 0;
+
+   menu_entries_ctl(MENU_ENTRIES_CTL_SET_REFRESH, &refresh);
+   menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
+   command_event(CMD_EVENT_SHADERS_APPLY_CHANGES, NULL);
+#endif
+   return 0;
+}
+
 static int action_start_video_filter_file_load(
       const char *path, const char *label,
       unsigned type, size_t idx, size_t entry_idx)
@@ -126,7 +177,7 @@ static int action_start_video_filter_file_load(
    settings_t *settings = config_get_ptr();
 
    if (!settings)
-      return menu_cbs_exit();
+      return -1;
 
    if (!string_is_empty(settings->paths.path_softfilter_plugin))
    {
@@ -151,7 +202,7 @@ static int action_start_audio_dsp_plugin_file_load(
    settings_t *settings = config_get_ptr();
 
    if (!settings)
-      return menu_cbs_exit();
+      return -1;
 
    if (!string_is_empty(settings->paths.path_audio_dsp_plugin))
    {
@@ -301,7 +352,7 @@ static int action_start_shader_pass(
    menu_handle_t *menu       = menu_state_get_ptr()->driver_data;
 
    if (!menu)
-      return menu_cbs_exit();
+      return -1;
 
    menu->scratchpad.unsigned_var = type - MENU_SETTINGS_SHADER_PASS_0;
 
@@ -450,6 +501,51 @@ static int action_start_playlist_left_thumbnail_mode(
    /* Set thumbnail_mode to default value */
    playlist_set_thumbnail_mode(playlist, PLAYLIST_THUMBNAIL_LEFT, PLAYLIST_THUMBNAIL_MODE_DEFAULT);
    playlist_write_file(playlist);
+
+   return 0;
+}
+
+static int action_start_state_slot(
+      const char *path, const char *label,
+      unsigned type, size_t idx, size_t entry_idx)
+{
+   settings_t *settings      = config_get_ptr();
+
+   settings->ints.state_slot = 0;
+
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_PATH, NULL);
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_IMAGE, NULL);
+
+   return 0;
+}
+
+static int action_start_replay_slot(
+      const char *path, const char *label,
+      unsigned type, size_t idx, size_t entry_idx)
+{
+   settings_t *settings      = config_get_ptr();
+
+   settings->ints.replay_slot = 0;
+
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_PATH, NULL);
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_IMAGE, NULL);
+
+   return 0;
+}
+
+static int action_start_menu_wallpaper(
+      const char *path, const char *label,
+      unsigned type, size_t idx, size_t entry_idx)
+{
+   settings_t *settings       = config_get_ptr();
+   struct menu_state *menu_st = menu_state_get_ptr();
+
+   settings->paths.path_menu_wallpaper[0] = '\0';
+
+   /* Reset wallpaper by menu context reset */
+   if (menu_st->driver_ctx && menu_st->driver_ctx->context_reset)
+      menu_st->driver_ctx->context_reset(menu_st->userdata,
+            video_driver_is_threaded());
 
    return 0;
 }
@@ -610,8 +706,6 @@ static int action_start_core_lock(
       core_info_t *core_info = NULL;
       char msg[PATH_MAX_LENGTH];
 
-      msg[0] = '\0';
-
       /* Need to fetch core name for error message */
 
       /* If core is found, use display name */
@@ -620,7 +714,7 @@ static int action_start_core_lock(
          core_name = core_info->display_name;
       /* If not, use core file name */
       else
-         core_name = path_basename(core_path);
+         core_name = path_basename_nocompression(core_path);
 
       /* Build error message */
       strlcpy(msg, msg_hash_to_str(MSG_CORE_UNLOCK_FAILED), sizeof(msg));
@@ -671,8 +765,6 @@ static int action_start_core_set_standalone_exempt(
       core_info_t *core_info = NULL;
       char msg[PATH_MAX_LENGTH];
 
-      msg[0] = '\0';
-
       /* Need to fetch core name for error message */
 
       /* If core is found, use display name */
@@ -681,7 +773,7 @@ static int action_start_core_set_standalone_exempt(
          core_name = core_info->display_name;
       /* If not, use core file name */
       else
-         core_name = path_basename(core_path);
+         core_name = path_basename_nocompression(core_path);
 
       /* Build error message */
       strlcpy(msg,
@@ -724,8 +816,17 @@ static int menu_cbs_init_bind_start_compare_label(menu_file_list_cbs_t *cbs)
          case MENU_ENUM_LABEL_VIDEO_SHADER_PRESET:
             BIND_ACTION_START(cbs, action_start_shader_preset);
             break;
+         case MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_APPEND:
+            BIND_ACTION_START(cbs, action_start_shader_preset_append);
+            break;
+         case MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_PREPEND:
+            BIND_ACTION_START(cbs, action_start_shader_preset_prepend);
+            break;
          case MENU_ENUM_LABEL_REMAP_FILE_INFO:
             BIND_ACTION_START(cbs, action_start_remap_file_info);
+            break;
+         case MENU_ENUM_LABEL_OVERRIDE_FILE_INFO:
+            BIND_ACTION_START(cbs, action_start_override_file_info);
             break;
          case MENU_ENUM_LABEL_VIDEO_FILTER:
             BIND_ACTION_START(cbs, action_start_video_filter_file_load);
@@ -798,6 +899,15 @@ static int menu_cbs_init_bind_start_compare_label(menu_file_list_cbs_t *cbs)
             BIND_ACTION_START(cbs, action_start_bluetooth);
             break;
 #endif
+         case MENU_ENUM_LABEL_STATE_SLOT:
+            BIND_ACTION_START(cbs, action_start_state_slot);
+            break;
+         case MENU_ENUM_LABEL_REPLAY_SLOT:
+            BIND_ACTION_START(cbs, action_start_replay_slot);
+            break;
+         case MENU_ENUM_LABEL_MENU_WALLPAPER:
+            BIND_ACTION_START(cbs, action_start_menu_wallpaper);
+            break;
          default:
             return -1;
       }
@@ -866,6 +976,15 @@ static int menu_cbs_init_bind_start_compare_type(menu_file_list_cbs_t *cbs,
             break;
          case MENU_SETTING_ACTION_CORE_SET_STANDALONE_EXEMPT:
             BIND_ACTION_START(cbs, action_start_core_set_standalone_exempt);
+            break;
+         case MENU_SETTING_ACTION_SAVESTATE:
+         case MENU_SETTING_ACTION_LOADSTATE:
+            BIND_ACTION_START(cbs, action_start_state_slot);
+            break;
+         case MENU_SETTING_ACTION_PLAYREPLAY:
+         case MENU_SETTING_ACTION_RECORDREPLAY:
+         case MENU_SETTING_ACTION_HALTREPLAY:
+            BIND_ACTION_START(cbs, action_start_replay_slot);
             break;
          default:
             return -1;

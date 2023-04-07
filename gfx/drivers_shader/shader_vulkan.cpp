@@ -532,6 +532,7 @@ class Pass
       void set_frame_count(uint64_t count) { frame_count = count; }
       void set_frame_count_period(unsigned p) { frame_count_period = p; }
       void set_frame_direction(int32_t dir) { frame_direction = dir; }
+      void set_rotation(uint32_t rot) { rotation = rot; }
       void set_name(const char *name) { pass_name = name; }
       const std::string &get_name() const { return pass_name; }
       glslang_filter_chain_filter get_source_filter() const { 
@@ -617,6 +618,7 @@ class Pass
 
       uint64_t frame_count        = 0;
       int32_t frame_direction     = 1;
+      uint32_t rotation           = 0;
       unsigned frame_count_period = 0;
       unsigned pass_number        = 0;
 
@@ -677,6 +679,7 @@ struct vulkan_filter_chain
       void set_frame_count(uint64_t count);
       void set_frame_count_period(unsigned pass, unsigned period);
       void set_frame_direction(int32_t direction);
+      void set_rotation(uint32_t rot);
       void set_pass_name(unsigned pass, const char *name);
 
       void add_static_texture(std::unique_ptr<StaticTexture> texture);
@@ -684,6 +687,9 @@ struct vulkan_filter_chain
       void release_staging_buffers();
 
       VkFormat get_pass_rt_format(unsigned pass);
+
+      bool emits_hdr10() const;
+      void set_hdr10();
 
    private:
       VkDevice device;
@@ -719,6 +725,7 @@ struct vulkan_filter_chain
       void clear_history_and_feedback(VkCommandBuffer cmd);
       void update_feedback_info();
       void update_history_info();
+      bool emits_hdr_colorspace = false;
 };
 
 static uint32_t find_memory_type_fallback(
@@ -845,6 +852,7 @@ static std::unique_ptr<StaticTexture> vulkan_filter_chain_load_lut(
    image_info.initialLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
 
    vkCreateImage(info->device, &image_info, nullptr, &tex);
+   vulkan_debug_mark_image(info->device, tex);
    vkGetImageMemoryRequirements(info->device, tex, &mem_reqs);
 
    alloc.allocationSize            = mem_reqs.size;
@@ -856,6 +864,7 @@ static std::unique_ptr<StaticTexture> vulkan_filter_chain_load_lut(
    if (vkAllocateMemory(info->device, &alloc, nullptr, &memory) != VK_SUCCESS)
       goto error;
 
+   vulkan_debug_mark_memory(info->device, memory);
    vkBindImageMemory(info->device, tex, memory, 0);
 
    view_info.image                       = tex;
@@ -1428,17 +1437,19 @@ bool vulkan_filter_chain::init_feedback()
 
 bool vulkan_filter_chain::init_alias()
 {
-   unsigned i, j;
+   int i;
+   
    common.texture_semantic_map.clear();
    common.texture_semantic_uniform_map.clear();
 
    for (i = 0; i < passes.size(); i++)
    {
+      unsigned j;
       const std::string name = passes[i]->get_name();
       if (name.empty())
          continue;
 
-      j = &passes[i] - passes.data();
+      j = (unsigned)(&passes[i] - passes.data());
 
       if (!slang_set_unique_map(
                common.texture_semantic_map, name,
@@ -1463,7 +1474,7 @@ bool vulkan_filter_chain::init_alias()
 
    for (i = 0; i < common.luts.size(); i++)
    {
-      j = &common.luts[i] - common.luts.data();
+      unsigned j = (unsigned)(&common.luts[i] - common.luts.data());
       if (!slang_set_unique_map(
                common.texture_semantic_map,
                common.luts[i]->get_id(),
@@ -1486,10 +1497,20 @@ void vulkan_filter_chain::set_pass_info(unsigned pass,
    pass_info[pass] = info;
 }
 
- VkFormat vulkan_filter_chain::get_pass_rt_format(unsigned pass)
- {
-    return pass_info[pass].rt_format;
- }
+VkFormat vulkan_filter_chain::get_pass_rt_format(unsigned pass)
+{
+   return pass_info[pass].rt_format;
+}
+
+bool vulkan_filter_chain::emits_hdr10() const
+{
+   return emits_hdr_colorspace;
+}
+
+void vulkan_filter_chain::set_hdr10()
+{
+   emits_hdr_colorspace = true;
+}
 
 void vulkan_filter_chain::set_num_passes(unsigned num_passes)
 {
@@ -1501,7 +1522,7 @@ void vulkan_filter_chain::set_num_passes(unsigned num_passes)
    for (i = 0; i < num_passes; i++)
    {
       passes.emplace_back(new Pass(device, memory_properties,
-               cache, deferred_calls.size(), i + 1 == num_passes));
+               cache, (unsigned)deferred_calls.size(), i + 1 == num_passes));
       passes.back()->set_common_resources(&common);
       passes.back()->set_pass_number(i);
    }
@@ -1633,6 +1654,13 @@ void vulkan_filter_chain::set_frame_direction(int32_t direction)
       passes[i]->set_frame_direction(direction);
 }
 
+void vulkan_filter_chain::set_rotation(uint32_t rot)
+{
+   unsigned i;
+   for (i = 0; i < passes.size(); i++)
+      passes[i]->set_rotation(rot);
+}
+
 void vulkan_filter_chain::set_pass_name(unsigned pass, const char *name)
 {
    passes[pass]->set_name(name);
@@ -1703,6 +1731,7 @@ Buffer::Buffer(VkDevice device,
          | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
    vkAllocateMemory(device, &alloc, NULL, &memory);
+   vulkan_debug_mark_memory(device, memory);
    vkBindBufferMemory(device, buffer, memory, 0);
 }
 
@@ -1905,7 +1934,7 @@ bool Pass::init_pipeline_layout()
       }
    }
 
-   set_layout_info.bindingCount           = bindings.size();
+   set_layout_info.bindingCount           = (uint32_t)bindings.size();
    set_layout_info.pBindings              = bindings.data();
 
    if (vkCreateDescriptorSetLayout(device,
@@ -1933,14 +1962,14 @@ bool Pass::init_pipeline_layout()
    }
 
    push.stages     = push_range.stageFlags;
-   push_range.size = reflection.push_constant_size;
+   push_range.size = (uint32_t)reflection.push_constant_size;
 
    if (vkCreatePipelineLayout(device,
             &layout_info, NULL, &pipeline_layout) != VK_SUCCESS)
       return false;
 
    pool_info.maxSets                    = num_sync_indices;
-   pool_info.poolSizeCount              = desc_counts.size();
+   pool_info.poolSizeCount              = (uint32_t)desc_counts.size();
    pool_info.pPoolSizes                 = desc_counts.data();
    if (vkCreateDescriptorPool(device, &pool_info, nullptr, &pool) != VK_SUCCESS)
       return false;
@@ -2464,6 +2493,9 @@ void Pass::build_semantics(VkDescriptorSet set, uint8_t *buffer,
    build_semantic_int(buffer, SLANG_SEMANTIC_FRAME_DIRECTION,
                       frame_direction);
 
+   build_semantic_uint(buffer, SLANG_SEMANTIC_ROTATION,
+                      rotation);
+
    /* Standard inputs */
    build_semantic_texture(set, buffer, SLANG_TEXTURE_SEMANTIC_ORIGINAL, original);
    build_semantic_texture(set, buffer, SLANG_TEXTURE_SEMANTIC_SOURCE, source);
@@ -2583,7 +2615,7 @@ void Pass::build_commands(
    if (push.stages != 0)
    {
       vkCmdPushConstants(cmd, pipeline_layout,
-            push.stages, 0, reflection.push_constant_size,
+            push.stages, 0, (uint32_t)reflection.push_constant_size,
             push.buffer.data());
    }
 
@@ -2706,6 +2738,7 @@ void Framebuffer::init(DeferredDisposer *disposer)
    levels                 = info.mipLevels;
 
    vkCreateImage(device, &info, nullptr, &image);
+   vulkan_debug_mark_image(device, image);
 
    vkGetImageMemoryRequirements(device, image, &mem_reqs);
 
@@ -2731,6 +2764,7 @@ void Framebuffer::init(DeferredDisposer *disposer)
       memory.size = mem_reqs.size;
 
       vkAllocateMemory(device, &alloc, nullptr, &memory.memory);
+      vulkan_debug_mark_memory(device, memory.memory);
    }
 
    vkBindImageMemory(device, image, memory.memory, 0);
@@ -2879,7 +2913,8 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
     if (!video_shader_load_preset_into_shader(path, shader.get()))
         return nullptr;
 
-   bool last_pass_is_fbo = shader->pass[shader->passes - 1].fbo.valid;
+   bool last_pass_is_fbo = shader->pass[shader->passes - 1].fbo.flags &
+      FBO_SCALE_FLAG_VALID;
    auto tmpinfo          = *info;
    tmpinfo.num_passes    = shader->passes + (last_pass_is_fbo ? 1 : 0);
 
@@ -2945,7 +2980,7 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
                      itr->id);
                goto error;
             }
-            chain->add_parameter(i, itr - shader->parameters, meta_param.id);
+            chain->add_parameter(i, (unsigned)(itr - shader->parameters), meta_param.id);
          }
          else
          {
@@ -3010,7 +3045,7 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
       if (output.meta.rt_format == SLANG_FORMAT_UNKNOWN)
          output.meta.rt_format     = SLANG_FORMAT_R8G8B8A8_UNORM;
 
-      if (!pass->fbo.valid)
+      if (!(pass->fbo.flags & FBO_SCALE_FLAG_VALID))
       {
          pass_info.scale_type_x    = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
          pass_info.scale_type_y    = GLSLANG_FILTER_CHAIN_SCALE_SOURCE;
@@ -3021,22 +3056,19 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
          {
             pass_info.scale_type_x = GLSLANG_FILTER_CHAIN_SCALE_VIEWPORT;
             pass_info.scale_type_y = GLSLANG_FILTER_CHAIN_SCALE_VIEWPORT;
-#ifdef VULKAN_HDR_SWAPCHAIN
-            if (tmpinfo.swapchain.format == VK_FORMAT_A2B10G10R10_UNORM_PACK32)
-            {
-               pass_info.rt_format    = glslang_format_to_vk( output.meta.rt_format);
 
-               RARCH_LOG("[slang]: Using render target format %s for pass output #%u.\n",
-                     glslang_format_to_string(output.meta.rt_format), i);
-            }
-            else
-#endif /* VULKAN_HDR_SWAPCHAIN */
-            {
-               pass_info.rt_format    = tmpinfo.swapchain.format;
+            /* Always inherit swapchain format. */
+            pass_info.rt_format  = tmpinfo.swapchain.format;
+            VkFormat pass_format = glslang_format_to_vk(output.meta.rt_format);
 
-               if (explicit_format)
-                  RARCH_WARN("[slang]: Using explicit format for last pass in chain,"
-                        " but it is not rendered to framebuffer, using swapchain format instead.\n");
+            /* If final pass explicitly emits RGB10, consider it HDR color space. */
+            if (explicit_format && pass_format == VK_FORMAT_A2B10G10R10_UNORM_PACK32)
+               chain->set_hdr10();
+
+            if (explicit_format && pass_format != pass_info.rt_format)
+            {
+               RARCH_WARN("[slang]: Using explicit format for last pass in chain,"
+                     " but it is not rendered to framebuffer, using swapchain format instead.\n");
             }
          }
          else
@@ -3051,9 +3083,9 @@ vulkan_filter_chain_t *vulkan_filter_chain_create_from_preset(
       {
          /* Preset overrides shader.
           * Kinda ugly ... */
-         if (pass->fbo.srgb_fbo)
+         if (pass->fbo.flags & FBO_SCALE_FLAG_SRGB_FBO)
             output.meta.rt_format = SLANG_FORMAT_R8G8B8A8_SRGB;
-         else if (pass->fbo.fp_fbo)
+         else if (pass->fbo.flags & FBO_SCALE_FLAG_FP_FBO)
             output.meta.rt_format = SLANG_FORMAT_R16G16B16A16_SFLOAT;
 
          pass_info.rt_format      = glslang_format_to_vk(output.meta.rt_format);
@@ -3227,6 +3259,13 @@ void vulkan_filter_chain_set_frame_direction(
    chain->set_frame_direction(direction);
 }
 
+void vulkan_filter_chain_set_rotation(
+      vulkan_filter_chain_t *chain,
+      uint32_t rot)
+{
+   chain->set_rotation(rot);
+}
+
 void vulkan_filter_chain_set_pass_name(
       vulkan_filter_chain_t *chain,
       unsigned pass,
@@ -3254,4 +3293,9 @@ void vulkan_filter_chain_end_frame(
       VkCommandBuffer cmd)
 {
    chain->end_frame(cmd);
+}
+
+bool vulkan_filter_chain_emits_hdr10(vulkan_filter_chain_t *chain)
+{
+   return chain->emits_hdr10();
 }

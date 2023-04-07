@@ -39,15 +39,12 @@ static void *uwp_input_init(const char *a)
 
 static uint64_t uwp_input_get_capabilities(void *data)
 {
-   uint64_t caps = 0;
-
-   caps |= (1 << RETRO_DEVICE_JOYPAD);
-   caps |= (1 << RETRO_DEVICE_MOUSE);
-   caps |= (1 << RETRO_DEVICE_KEYBOARD);
-   caps |= (1 << RETRO_DEVICE_POINTER);
-   caps |= (1 << RETRO_DEVICE_ANALOG);
-
-   return caps;
+   return
+           (1 << RETRO_DEVICE_JOYPAD)
+         | (1 << RETRO_DEVICE_MOUSE)
+         | (1 << RETRO_DEVICE_KEYBOARD)
+         | (1 << RETRO_DEVICE_POINTER)
+         | (1 << RETRO_DEVICE_ANALOG);
 }
 
 static int16_t uwp_input_state(
@@ -104,8 +101,8 @@ static int16_t uwp_input_state(
             {
                if ((binds[port][id].key < RETROK_LAST) 
                      && uwp_keyboard_pressed(binds[port][id].key)
-                     && ((id == RARCH_GAME_FOCUS_TOGGLE) || 
-                        !keyboard_mapping_blocked)
+                     && ((id == RARCH_GAME_FOCUS_TOGGLE)
+                     || !keyboard_mapping_blocked)
                      )
                   return 1;
                else if (uwp_mouse_state(port,
@@ -171,5 +168,6 @@ input_driver_t input_uwp = {
    uwp_input_get_capabilities,
    "uwp",
    NULL,                         /* grab_mouse */
+   NULL,
    NULL
 };

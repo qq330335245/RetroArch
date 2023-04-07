@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <assert.h>
 
 #include <sys/mman.h>
 #include <linux/omapfb.h>
@@ -38,7 +37,6 @@
 #endif
 
 #include <retro_inline.h>
-#include <retro_assert.h>
 #include <gfx/scaler/scaler.h>
 #include <gfx/video_frame.h>
 #include <string/stdstring.h>
@@ -682,13 +680,9 @@ static void omapfb_prepare(omapfb_data_t *pdata)
    /* issue flip before getting free page */
    omapfb_page_flip(pdata);
 
-   page            = omapfb_get_page(pdata);
-
-   retro_assert(page != NULL);
-
-   pdata->old_page = pdata->cur_page;
-   pdata->cur_page = page;
-
+   page                  = omapfb_get_page(pdata);
+   pdata->old_page       = pdata->cur_page;
+   pdata->cur_page       = page;
    pdata->cur_page->used = true;
 }
 
@@ -1156,9 +1150,6 @@ video_driver_t video_omap = {
 
 #ifdef HAVE_OVERLAY
    NULL, /* overlay_interface */
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
    omap_gfx_get_poke_interface
 };

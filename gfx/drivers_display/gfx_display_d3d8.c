@@ -25,18 +25,17 @@
 
 #include "../gfx_display.h"
 
-#include "../../retroarch.h"
 #include "../common/d3d_common.h"
 #include "../common/d3d8_common.h"
 
-static const float d3d8_vertexes[] = {
+static const float d3d8_vertexes[8] = {
    0, 0,
    1, 0,
    0, 1,
    1, 1
 };
 
-static const float d3d8_tex_coords[] = {
+static const float d3d8_tex_coords[8] = {
    0, 1,
    1, 1,
    0, 0,
@@ -55,7 +54,7 @@ static const float *gfx_display_d3d8_get_default_tex_coords(void)
 
 static void *gfx_display_d3d8_get_default_mvp(void *data)
 {
-   static float id[] =         { 1.0f, 0.0f, 0.0f, 0.0f,
+   static float id[16] =       { 1.0f, 0.0f, 0.0f, 0.0f,
                                  0.0f, 1.0f, 0.0f, 0.0f,
                                  0.0f, 0.0f, 1.0f, 0.0f, 
                                  0.0f, 0.0f, 0.0f, 1.0f
@@ -234,20 +233,6 @@ static void gfx_display_d3d8_draw(gfx_display_ctx_draw_t *draw,
    d3d->menu_display.offset += draw->coords->vertices;
 }
 
-static bool gfx_display_d3d8_font_init_first(
-      void **font_handle, void *video_data,
-      const char *font_path, float font_size,
-      bool is_threaded)
-{
-   font_data_t **handle = (font_data_t**)font_handle;
-   if (!(*handle = font_driver_init_first(video_data,
-         font_path, font_size, true,
-         is_threaded,
-         FONT_DRIVER_RENDER_D3D8_API)))
-		 return false;
-   return true;
-}
-
 gfx_display_ctx_driver_t gfx_display_ctx_d3d8 = {
    gfx_display_d3d8_draw,
    NULL,                                        /* draw_pipeline */
@@ -256,7 +241,7 @@ gfx_display_ctx_driver_t gfx_display_ctx_d3d8 = {
    gfx_display_d3d8_get_default_mvp,
    gfx_display_d3d8_get_default_vertices,
    gfx_display_d3d8_get_default_tex_coords,
-   gfx_display_d3d8_font_init_first,
+   FONT_DRIVER_RENDER_D3D8_API,
    GFX_VIDEO_DRIVER_DIRECT3D8,
    "d3d8",
    false,

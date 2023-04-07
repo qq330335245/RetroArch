@@ -26,7 +26,6 @@
 #include <compat/posix_string.h>
 #include <file/config_file.h>
 #include <file/file_path.h>
-#include <retro_assert.h>
 #include <string/stdstring.h>
 
 #ifdef HAVE_CONFIG_H
@@ -87,11 +86,13 @@ struct shader_program_cg
    CGparameter out_size_f;
    CGparameter frame_cnt_f;
    CGparameter frame_dir_f;
+   CGparameter rotation_f;
    CGparameter vid_size_v;
    CGparameter tex_size_v;
    CGparameter out_size_v;
    CGparameter frame_cnt_v;
    CGparameter frame_dir_v;
+   CGparameter rotation_v;
    CGparameter mvp;
 
    struct cg_fbo_params fbo[GFX_MAX_SHADERS];
@@ -234,12 +235,8 @@ static void cg_error_handler(CGcontext ctx, CGerror error, void *data)
 
 static void gl_cg_reset_attrib(void *data)
 {
-   unsigned i;
+   int i;
    cg_shader_data_t *cg = (cg_shader_data_t*)data;
-
-   /* Add sanity check that we did not overflow. */
-   retro_assert(cg->attribs_index <= ARRAY_SIZE(cg->attribs_elems));
-
    for (i = 0; i < cg->attribs_index; i++)
       cgGLDisableClientState(cg->attribs_elems[i]);
    cg->attribs_index = 0;
@@ -358,6 +355,8 @@ static void gl_cg_set_params(void *dat, void *shader_data)
             1.0);
    }
 #endif
+   cg_gl_set_param_1f(cg->prg[cg->active_idx].rotation_f, (float)retroarch_get_rotation());
+   cg_gl_set_param_1f(cg->prg[cg->active_idx].rotation_v, (float)retroarch_get_rotation());
 
    set_param_2f(cg->prg[cg->active_idx].vid_size_v, width, height);
    set_param_2f(cg->prg[cg->active_idx].tex_size_v, tex_width, tex_height);
@@ -795,11 +794,13 @@ static void gl_cg_set_program_attributes(void *data, unsigned i)
    cg->prg[i].out_size_f = cgGetNamedParameter (cg->prg[i].fprg, "IN.output_size");
    cg->prg[i].frame_cnt_f = cgGetNamedParameter(cg->prg[i].fprg, "IN.frame_count");
    cg->prg[i].frame_dir_f = cgGetNamedParameter(cg->prg[i].fprg, "IN.frame_direction");
+   cg->prg[i].rotation_f  = cgGetNamedParameter(cg->prg[i].fprg, "IN.rotation");
    cg->prg[i].vid_size_v = cgGetNamedParameter (cg->prg[i].vprg, "IN.video_size");
    cg->prg[i].tex_size_v = cgGetNamedParameter (cg->prg[i].vprg, "IN.texture_size");
    cg->prg[i].out_size_v = cgGetNamedParameter (cg->prg[i].vprg, "IN.output_size");
    cg->prg[i].frame_cnt_v = cgGetNamedParameter(cg->prg[i].vprg, "IN.frame_count");
    cg->prg[i].frame_dir_v = cgGetNamedParameter(cg->prg[i].vprg, "IN.frame_direction");
+   cg->prg[i].rotation_v  = cgGetNamedParameter(cg->prg[i].vprg, "IN.rotation");
 
    cg->prg[i].mvp                 = cgGetNamedParameter(cg->prg[i].vprg, "modelViewProj");
    if (!cg->prg[i].mvp)
@@ -1078,9 +1079,9 @@ static void gl_cg_shader_scale(void *data, unsigned idx, struct gfx_fbo_scale *s
 {
    cg_shader_data_t *cg = (cg_shader_data_t*)data;
    if (cg && idx)
-      *scale = cg->shader->pass[idx - 1].fbo;
+      *scale        = cg->shader->pass[idx - 1].fbo;
    else
-      scale->valid = false;
+      scale->flags &= ~FBO_SCALE_FLAG_VALID;
 }
 
 static unsigned gl_cg_get_prev_textures(void *data)

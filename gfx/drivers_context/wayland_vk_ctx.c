@@ -82,7 +82,7 @@ static void gfx_ctx_wl_check_window(void *data, bool *quit,
 
    /* Swapchains are recreated in set_resize as a
     * central place, so use that to trigger swapchain reinit. */
-   *resize = wl->vk.need_new_swapchain;
+   *resize = wl->vk.flags & VK_DATA_FLAG_NEED_NEW_SWAPCHAIN;
 
    gfx_ctx_wl_check_window_common(wl, gfx_ctx_wl_get_video_size, quit, resize, 
       width, height);
@@ -95,11 +95,11 @@ static bool gfx_ctx_wl_set_resize(void *data, unsigned width, unsigned height)
 
    if (vulkan_create_swapchain(&wl->vk, width, height, wl->swap_interval))
    {
-      wl->vk.context.invalid_swapchain = true;
-      if (wl->vk.created_new_swapchain)
+      wl->vk.context.flags |= VK_CTX_FLAG_INVALID_SWAPCHAIN;
+      if (wl->vk.flags & VK_DATA_FLAG_CREATED_NEW_SWAPCHAIN)
          vulkan_acquire_next_image(&wl->vk);
 
-      wl->vk.need_new_swapchain = false;
+      wl->vk.flags         &= ~VK_DATA_FLAG_NEED_NEW_SWAPCHAIN;
 
       wl_surface_set_buffer_scale(wl->surface, wl->buffer_scale);
 
@@ -114,13 +114,6 @@ static void gfx_ctx_wl_update_title(void *data)
 {
    gfx_ctx_wayland_data_t *wl   = (gfx_ctx_wayland_data_t*)data;
    gfx_ctx_wl_update_title_common(wl);
-}
-
-static bool gfx_ctx_wl_get_metrics(void *data,
-      enum display_metric_types type, float *value)
-{
-   gfx_ctx_wayland_data_t *wl = (gfx_ctx_wayland_data_t*)data;
-   return gfx_ctx_wl_get_metrics_common(wl, type, value);
 }
 
 #ifdef HAVE_LIBDECOR_H
@@ -196,7 +189,7 @@ static void gfx_ctx_wl_set_swap_interval(void *data, int swap_interval)
    {
       wl->swap_interval = swap_interval;
       if (wl->vk.swapchain)
-         wl->vk.need_new_swapchain = true;
+         wl->vk.flags  |= VK_DATA_FLAG_NEED_NEW_SWAPCHAIN;
    }
 }
 
@@ -206,13 +199,13 @@ static bool gfx_ctx_wl_set_video_mode(void *data,
 {
    gfx_ctx_wayland_data_t *wl   = (gfx_ctx_wayland_data_t*)data;
 
-   if (!gfx_ctx_wl_set_video_mode_common_size(wl, width, height))
+   if (!gfx_ctx_wl_set_video_mode_common_size(wl, width, height, fullscreen))
       goto error;
 
    if (!vulkan_surface_create(&wl->vk, VULKAN_WSI_WAYLAND,
          wl->input.dpy, wl->surface,
-         wl->width  * wl->buffer_scale,
-         wl->height * wl->buffer_scale,
+         wl->buffer_width,
+         wl->buffer_height,
          wl->swap_interval))
       goto error;
 
@@ -258,9 +251,7 @@ static enum gfx_ctx_api gfx_ctx_wl_get_api(void *data)
 static bool gfx_ctx_wl_bind_api(void *data,
       enum gfx_ctx_api api, unsigned major, unsigned minor)
 {
-   if (api == GFX_CTX_VULKAN_API)
-         return true;
-   return false;
+   return (api == GFX_CTX_VULKAN_API);
 }
 
 static void *gfx_ctx_wl_get_context_data(void *data)
@@ -273,9 +264,9 @@ static void gfx_ctx_wl_swap_buffers(void *data)
 {
    gfx_ctx_wayland_data_t *wl = (gfx_ctx_wayland_data_t*)data;
 
-   if (wl->vk.context.has_acquired_swapchain)
+   if (wl->vk.context.flags & VK_CTX_FLAG_HAS_ACQUIRED_SWAPCHAIN)
    {
-      wl->vk.context.has_acquired_swapchain = false;
+      wl->vk.context.flags &= ~VK_CTX_FLAG_HAS_ACQUIRED_SWAPCHAIN;
       if (wl->vk.swapchain == VK_NULL_HANDLE)
       {
          retro_sleep(10);
@@ -287,11 +278,7 @@ static void gfx_ctx_wl_swap_buffers(void *data)
    flush_wayland_fd(&wl->input);
 }
 
-static gfx_ctx_proc_t gfx_ctx_wl_get_proc_address(const char *symbol)
-{
-   return NULL;
-}
-
+static gfx_ctx_proc_t gfx_ctx_wl_get_proc_address(const char *symbol) { return NULL; }
 static void gfx_ctx_wl_bind_hw_render(void *data, bool enable) { }
 
 static uint32_t gfx_ctx_wl_get_flags(void *data)
@@ -320,7 +307,7 @@ const gfx_ctx_driver_t gfx_ctx_vk_wayland = {
    NULL, /* get_video_output_size */
    NULL, /* get_video_output_prev */
    NULL, /* get_video_output_next */
-   gfx_ctx_wl_get_metrics,
+   gfx_ctx_wl_get_metrics_common,
    NULL,
    gfx_ctx_wl_update_title,
    gfx_ctx_wl_check_window,

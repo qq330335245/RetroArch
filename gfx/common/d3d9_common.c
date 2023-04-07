@@ -256,7 +256,7 @@ void *d3d9_texture_new_from_file(void *_dev,
    LPDIRECT3DDEVICE9 dev = (LPDIRECT3DDEVICE9)_dev;
    void *buf             = NULL;
    if (SUCCEEDED(D3D9CreateTextureFromFile((LPDIRECT3DDEVICE9)dev,
-               path, width, height, miplevels, usage, format,
+               path, width, height, miplevels, usage, (D3DFORMAT)format,
                (D3DPOOL)pool, filter, mipfilter, color_key,
                (D3DXIMAGE_INFO*)src_info_data,
                palette, (struct IDirect3DTexture9**)&buf)))
@@ -592,7 +592,7 @@ static void d3d9_get_video_size(d3d9_video_t *d3d,
 
    d3d->resolution_hd_enable    = false;
 
-   if(video_mode.fIsHiDef)
+   if (video_mode.fIsHiDef)
    {
       *width                    = 1280;
       *height                   = 720;
@@ -775,7 +775,7 @@ static void d3d9_init_singlepass(d3d9_video_t *d3d)
    pass                                  = (struct video_shader_pass*)
       &d3d->shader.pass[0];
 
-   pass->fbo.valid                       = true;
+   pass->fbo.flags                      |= FBO_SCALE_FLAG_VALID;
    pass->fbo.scale_y                     = 1.0;
    pass->fbo.type_y                      = RARCH_SCALE_VIEWPORT;
    pass->fbo.scale_x                     = pass->fbo.scale_y;
@@ -801,7 +801,7 @@ static bool d3d9_init_multipass(d3d9_video_t *d3d, const char *shader_path)
 
    for (i = 0; i < d3d->shader.passes; i++)
    {
-      if (d3d->shader.pass[i].fbo.valid)
+      if (d3d->shader.pass[i].fbo.flags & FBO_SCALE_FLAG_VALID)
          continue;
 
       d3d->shader.pass[i].fbo.scale_y = 1.0f;
@@ -811,7 +811,7 @@ static bool d3d9_init_multipass(d3d9_video_t *d3d, const char *shader_path)
    }
 
    use_extra_pass       = d3d->shader.passes < GFX_MAX_SHADERS &&
-      d3d->shader.pass[d3d->shader.passes - 1].fbo.valid;
+      (d3d->shader.pass[d3d->shader.passes - 1].fbo.flags & FBO_SCALE_FLAG_VALID);
 
    if (use_extra_pass)
    {
@@ -1196,17 +1196,15 @@ static void d3d9_video_texture_load_d3d(
    if (!ti)
       return;
 
-   if((info->type == TEXTURE_FILTER_MIPMAP_LINEAR) ||
-      (info->type == TEXTURE_FILTER_MIPMAP_NEAREST))
+   if (  (info->type == TEXTURE_FILTER_MIPMAP_LINEAR) 
+      || (info->type == TEXTURE_FILTER_MIPMAP_NEAREST))
       want_mipmap        = true;
 
-   tex = (LPDIRECT3DTEXTURE9)d3d9_texture_new(d3d->dev,
+   if (!(tex = (LPDIRECT3DTEXTURE9)d3d9_texture_new(d3d->dev,
                ti->width, ti->height, 0,
                usage, D3D9_ARGB8888_FORMAT,
                D3DPOOL_MANAGED, 0, 0, 0,
-               NULL, NULL, want_mipmap);
-
-   if (!tex)
+               NULL, NULL, want_mipmap)))
       return;
 
    IDirect3DTexture9_LockRect(tex, 0, &d3dlr, NULL, D3DLOCK_NOSYSLOCK);

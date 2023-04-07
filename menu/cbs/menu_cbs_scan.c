@@ -56,11 +56,9 @@ int action_scan_file(const char *path,
    const char *directory_playlist = settings->paths.directory_playlist;
    const char *path_content_db    = settings->paths.path_content_database;
 
-   fullpath[0]                    = '\0';
-
    menu_entries_get_last_stack(&menu_path, NULL, NULL, NULL, NULL);
 
-   fill_pathname_join(fullpath, menu_path, path, sizeof(fullpath));
+   fill_pathname_join_special(fullpath, menu_path, path, sizeof(fullpath));
 
    task_push_dbscan(
          directory_playlist,
@@ -82,12 +80,10 @@ int action_scan_directory(const char *path,
    const char *directory_playlist = settings->paths.directory_playlist;
    const char *path_content_db    = settings->paths.path_content_database;
 
-   fullpath[0]                    = '\0';
-
    menu_entries_get_last_stack(&menu_path, NULL, NULL, NULL, NULL);
 
    if (path)
-      fill_pathname_join(fullpath, menu_path, path, sizeof(fullpath));
+      fill_pathname_join_special(fullpath, menu_path, path, sizeof(fullpath));
    else
       strlcpy(fullpath, menu_path, sizeof(fullpath));
 
@@ -118,38 +114,58 @@ int action_switch_thumbnail(const char *path,
    if (!settings)
       return -1;
 
-   /* RGUI is a special case where thumbnail 'switch' corresponds to
-    * toggling thumbnail view on/off.
+   /* RGUI has its own cycling for thumbnails in order to allow
+    * cycling all images in fullscreen mode.
     * GLUI is a special case where thumbnail 'switch' corresponds to
     * changing thumbnail view mode.
     * For other menu drivers, we cycle through available thumbnail
-    * types. */
-   if (!switch_enabled)
-      return 0;
-
-   if (settings->uints.gfx_thumbnails == 0)
+    * types and skip if already visible. */
+   if (switch_enabled)
    {
-      configuration_set_uint(settings,
-            settings->uints.menu_left_thumbnails,
-            settings->uints.menu_left_thumbnails + 1);
-
-      if (settings->uints.menu_left_thumbnails > 3)
+      if (settings->uints.gfx_thumbnails == 0)
+      {
          configuration_set_uint(settings,
-               settings->uints.menu_left_thumbnails, 1);
-   }
-   else
-   {
-      configuration_set_uint(settings,
-            settings->uints.gfx_thumbnails,
-            settings->uints.gfx_thumbnails + 1);
+               settings->uints.menu_left_thumbnails,
+               settings->uints.menu_left_thumbnails + 1);
 
-      if (settings->uints.gfx_thumbnails > 3)
+         if (settings->uints.gfx_thumbnails == settings->uints.menu_left_thumbnails)
+            configuration_set_uint(settings,
+                  settings->uints.menu_left_thumbnails,
+                  settings->uints.menu_left_thumbnails + 1);
+
+         if (settings->uints.menu_left_thumbnails > 3)
+            configuration_set_uint(settings,
+                  settings->uints.menu_left_thumbnails, 1);
+
+         if (settings->uints.gfx_thumbnails == settings->uints.menu_left_thumbnails)
+            configuration_set_uint(settings,
+                  settings->uints.menu_left_thumbnails,
+                  settings->uints.menu_left_thumbnails + 1);
+      }
+      else
+      {
          configuration_set_uint(settings,
-               settings->uints.gfx_thumbnails, 1);
-   }
+               settings->uints.gfx_thumbnails,
+               settings->uints.gfx_thumbnails + 1);
 
-   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_THUMBNAIL_PATH, NULL);
-   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_THUMBNAIL_IMAGE, NULL);
+         if (settings->uints.gfx_thumbnails == settings->uints.menu_left_thumbnails)
+            configuration_set_uint(settings,
+                  settings->uints.gfx_thumbnails,
+                  settings->uints.gfx_thumbnails + 1);
+
+         if (settings->uints.gfx_thumbnails > 3)
+            configuration_set_uint(settings,
+                  settings->uints.gfx_thumbnails, 1);
+
+         if (settings->uints.gfx_thumbnails == settings->uints.menu_left_thumbnails)
+            configuration_set_uint(settings,
+                  settings->uints.gfx_thumbnails,
+                  settings->uints.gfx_thumbnails + 1);
+      }
+
+      menu_driver_ctl(RARCH_MENU_CTL_UPDATE_THUMBNAIL_PATH, NULL);
+      menu_driver_ctl(RARCH_MENU_CTL_UPDATE_THUMBNAIL_IMAGE, NULL);
+   }
 
    return 0;
 }
@@ -216,6 +232,17 @@ static int action_scan_input_desc(const char *path,
    return 0;
 }
 
+static int action_scan_video_font_path(const char *path,
+      const char *label, unsigned type, size_t idx)
+{
+   settings_t *settings       = config_get_ptr();
+
+   strlcpy(settings->paths.path_font, "null", sizeof(settings->paths.path_font));
+   command_event(CMD_EVENT_REINIT, NULL);
+
+   return 0;
+}
+
 static int menu_cbs_init_bind_scan_compare_type(menu_file_list_cbs_t *cbs,
       unsigned type)
 {
@@ -263,10 +290,21 @@ int menu_cbs_init_bind_scan(menu_file_list_cbs_t *cbs,
 
    if (cbs->setting)
    {
-      if (cbs->setting->type == ST_BIND)
+      switch (cbs->setting->type)
       {
-         BIND_ACTION_SCAN(cbs, action_scan_input_desc);
-         return 0;
+         case ST_BIND:
+            BIND_ACTION_SCAN(cbs, action_scan_input_desc);
+            return 0;
+         case ST_PATH:
+            if (string_is_equal(label, msg_hash_to_str(MENU_ENUM_LABEL_VIDEO_FONT_PATH)))
+            {
+               BIND_ACTION_SCAN(cbs, action_scan_video_font_path);
+               return 0;
+            }
+            break;
+         default:
+         case ST_NONE:
+            break;
       }
    }
 

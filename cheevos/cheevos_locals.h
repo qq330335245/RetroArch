@@ -93,6 +93,13 @@ typedef struct rcheevos_ralboard_t
   const char* mem;
   unsigned id;
   unsigned format;
+
+#ifdef HAVE_GFX_WIDGETS
+  int value;
+  unsigned value_hash;
+  uint8_t active_tracker_id;
+#endif
+
 } rcheevos_ralboard_t;
 
 
@@ -108,6 +115,14 @@ enum rcheevos_load_state
    RCHEEVOS_LOAD_STATE_NETWORK_ERROR,
    RCHEEVOS_LOAD_STATE_LOGIN_FAILED,
    RCHEEVOS_LOAD_STATE_ABORTED
+};
+
+enum rcheevos_summary_notif
+{
+   RCHEEVOS_SUMMARY_ALLGAMES = 0,
+   RCHEEVOS_SUMMARY_HASCHEEVOS,
+   RCHEEVOS_SUMMARY_OFF,
+   RCHEEVOS_SUMMARY_LAST
 };
 
 typedef struct rcheevos_load_info_t
@@ -147,8 +162,6 @@ typedef struct rcheevos_menuitem_t
    enum msg_hash_enums state_label_idx;
 } rcheevos_menuitem_t;
 
-void rcheevos_menu_reset_badges(void);
-
 #endif
 
 typedef struct rcheevos_locals_t
@@ -173,11 +186,18 @@ typedef struct rcheevos_locals_t
    unsigned menuitem_count;           /* current number of items in the menuitems array */
 #endif
 
+#ifdef HAVE_GFX_WIDGETS
+   unsigned active_lboard_trackers;   /* bit mask of active leaderboard tracker ids */
+#endif
+
    rcheevos_load_info_t load_info;    /* load info */
 
    bool hardcore_active;              /* hardcore functionality is active */
    bool loaded;                       /* load task has completed */
    bool core_supports;                /* false if core explicitly disables achievements */
+#ifdef HAVE_GFX_WIDGETS
+   bool assign_new_trackers;          /* a new leaderboard was started and needs a tracker assigned */
+#endif
    bool leaderboards_enabled;         /* leaderboards are enabled */
    bool leaderboard_notifications;    /* leaderboard notifications are enabled */
    bool leaderboard_trackers;         /* leaderboard trackers are enabled */
@@ -189,14 +209,6 @@ int rcheevos_end_load_state(void);
 bool rcheevos_load_aborted(void);
 
 void rcheevos_show_mastery_placard(void);
-
-#ifdef HAVE_THREADS
- #define CHEEVOS_LOCK(l)   do { slock_lock(l); } while (0)
- #define CHEEVOS_UNLOCK(l) do { slock_unlock(l); } while (0)
-#else
- #define CHEEVOS_LOCK(l)
- #define CHEEVOS_UNLOCK(l)
-#endif
 
 RETRO_END_DECLS
 

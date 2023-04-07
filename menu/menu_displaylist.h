@@ -57,6 +57,7 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_DROPDOWN_LIST,
    DISPLAYLIST_DROPDOWN_LIST_SPECIAL,
    DISPLAYLIST_DROPDOWN_LIST_RESOLUTION,
+   DISPLAYLIST_DROPDOWN_LIST_AUDIO_DEVICE,
    DISPLAYLIST_DROPDOWN_LIST_VIDEO_SHADER_PARAMETER,
    DISPLAYLIST_DROPDOWN_LIST_VIDEO_SHADER_PRESET_PARAMETER,
    DISPLAYLIST_DROPDOWN_LIST_VIDEO_SHADER_NUM_PASSES,
@@ -69,9 +70,11 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_DROPDOWN_LIST_MANUAL_CONTENT_SCAN_CORE_NAME,
    DISPLAYLIST_DROPDOWN_LIST_DISK_INDEX,
    DISPLAYLIST_DROPDOWN_LIST_INPUT_DEVICE_TYPE,
-   DISPLAYLIST_DROPDOWN_LIST_INPUT_DEVICE_INDEX,
    DISPLAYLIST_DROPDOWN_LIST_INPUT_DESCRIPTION,
    DISPLAYLIST_DROPDOWN_LIST_INPUT_DESCRIPTION_KBD,
+#ifdef ANDROID
+    DISPLAYLIST_DROPDOWN_LIST_INPUT_SELECT_PHYSICAL_KEYBOARD,
+#endif
 #ifdef HAVE_NETWORKING
    DISPLAYLIST_DROPDOWN_LIST_NETPLAY_MITM_SERVER,
 #endif
@@ -125,7 +128,6 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_SHADER_PASS,
    DISPLAYLIST_SHADER_PRESET,
    DISPLAYLIST_DATABASES,
-   DISPLAYLIST_DATABASE_CURSORS,
    DISPLAYLIST_DATABASE_PLAYLISTS,
    DISPLAYLIST_DATABASE_PLAYLISTS_HORIZONTAL,
    DISPLAYLIST_DATABASE_QUERY,
@@ -149,9 +151,6 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_EJECT_DISC,
 #endif
    DISPLAYLIST_OVERLAYS,
-#ifdef HAVE_VIDEO_LAYOUT
-   DISPLAYLIST_VIDEO_LAYOUT_PATH,
-#endif
    DISPLAYLIST_SHADER_PARAMETERS,
    DISPLAYLIST_SHADER_PARAMETERS_PRESET,
    DISPLAYLIST_SHADER_PRESET_SAVE,
@@ -198,9 +197,6 @@ enum menu_displaylist_ctl_state
 #endif
    DISPLAYLIST_AI_SERVICE_SETTINGS_LIST,
    DISPLAYLIST_ACCESSIBILITY_SETTINGS_LIST,
-#ifdef HAVE_VIDEO_LAYOUT
-   DISPLAYLIST_ONSCREEN_VIDEO_LAYOUT_SETTINGS_LIST,
-#endif
    DISPLAYLIST_ONSCREEN_DISPLAY_SETTINGS_LIST,
    DISPLAYLIST_ONSCREEN_NOTIFICATIONS_SETTINGS_LIST,
    DISPLAYLIST_ONSCREEN_NOTIFICATIONS_VIEWS_SETTINGS_LIST,
@@ -209,16 +205,22 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_QUICK_MENU_VIEWS_SETTINGS_LIST,
    DISPLAYLIST_SETTINGS_VIEWS_SETTINGS_LIST,
    DISPLAYLIST_MENU_SETTINGS_LIST,
+#ifdef _3DS
+   DISPLAYLIST_MENU_BOTTOM_SETTINGS_LIST,
+#endif
    DISPLAYLIST_USER_INTERFACE_SETTINGS_LIST,
    DISPLAYLIST_POWER_MANAGEMENT_SETTINGS_LIST,
    DISPLAYLIST_MENU_SOUNDS_LIST,
    DISPLAYLIST_RETRO_ACHIEVEMENTS_SETTINGS_LIST,
+   DISPLAYLIST_CHEEVOS_APPEARANCE_SETTINGS_LIST,
+   DISPLAYLIST_CHEEVOS_VISIBILITY_SETTINGS_LIST,
    DISPLAYLIST_UPDATER_SETTINGS_LIST,
    DISPLAYLIST_BLUETOOTH_SETTINGS_LIST,
    DISPLAYLIST_WIFI_SETTINGS_LIST,
    DISPLAYLIST_NETWORK_SETTINGS_LIST,
    DISPLAYLIST_NETWORK_HOSTING_SETTINGS_LIST,
    DISPLAYLIST_NETPLAY_KICK_LIST,
+   DISPLAYLIST_NETPLAY_BAN_LIST,
    DISPLAYLIST_NETPLAY_LOBBY_FILTERS_LIST,
    DISPLAYLIST_NETPLAY_LAN_SCAN_SETTINGS_LIST,
    DISPLAYLIST_LAKKA_SERVICES_LIST,
@@ -275,7 +277,9 @@ enum menu_displaylist_ctl_state
    DISPLAYLIST_CPU_PERFPOWER_LIST,
    DISPLAYLIST_CPU_POLICY_LIST,
 #endif
-   DISPLAYLIST_PENDING_CLEAR
+   DISPLAYLIST_PENDING_CLEAR,
+   DISPLAYLIST_SHADER_PRESET_PREPEND,
+   DISPLAYLIST_SHADER_PRESET_APPEND
 };
 
 enum filebrowser_enums
@@ -292,6 +296,24 @@ enum filebrowser_enums
    FILEBROWSER_SELECT_COLLECTION
 };
 
+enum menu_dl_flags
+{
+   MD_FLAG_NONE                          = 0,
+   MD_FLAG_NEED_SORT                     = (1 << 0), /* Should the displaylist be sorted by alphabet? */
+   MD_FLAG_NEED_REFRESH                  = (1 << 1),
+   MD_FLAG_NEED_ENTRIES_REFRESH          = (1 << 2),
+   MD_FLAG_NEED_PUSH                     = (1 << 3),
+   MD_FLAG_NEED_PUSH_NO_PLAYLIST_ENTRIES = (1 << 4),
+   MD_FLAG_NEED_CLEAR                    = (1 << 5), /* Should we clear the displaylist before we push
+						      * entries onto it? */
+   MD_FLAG_PUSH_BUILTIN_CORES            = (1 << 6),
+   MD_FLAG_DOWNLOAD_CORE                 = (1 << 7), /* Should a 'download core' entry be pushed onto the list?
+						      * This will be set to true in case there are no currently
+						      * installed cores. */
+   MD_FLAG_NEED_NAVIGATION_CLEAR         = (1 << 8)  /* Does the navigation index need to be cleared 
+                                                      * to 0 (first entry) ? */
+};
+
 typedef struct menu_displaylist_info
 {
    char *path;
@@ -305,29 +327,12 @@ typedef struct menu_displaylist_info
 
    size_t directory_ptr;
 
+   uint32_t flags;
    unsigned count;
 
    unsigned type;
    unsigned type_default;
-   unsigned flags;
-
    enum msg_hash_enums enum_idx;
-   /* should the displaylist be sorted by alphabet? */
-   bool need_sort;
-   bool need_refresh;
-   bool need_entries_refresh;
-   bool need_push;
-   bool need_push_no_playlist_entries;
-   /* should we clear the displaylist before we push
-    * entries onto it? */
-   bool need_clear;
-   bool push_builtin_cores;
-   /* Should a 'download core' entry be pushed onto the list?
-    * This will be set to true in case there are no currently
-    * installed cores. */
-   bool download_core;
-   /* does the navigation index need to be cleared to 0 (first entry) ? */
-   bool need_navigation_clear;
 } menu_displaylist_info_t;
 
 #define MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list, label, parse_type, add_empty_entry) menu_displaylist_parse_settings_enum(list, parse_type, add_empty_entry, menu_setting_find_enum(label), label, true)

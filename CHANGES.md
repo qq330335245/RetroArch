@@ -1,5 +1,608 @@
 # Future
 
+# 1.15.0
+- AI SERVICE: Fix NVDA switching to Powershell on speak
+- ANDROID: In Android builds, add input_android_physical_keyboard configuration option and its corresponding menu entry to force a device to act as a physical keyboard. When running on Android, RetroArch considers most devices that emit dpad events as gamepads, even if they also emit other keyboard events; this is usually the right thing to do, but it has the side effect of not letting some actual keyboards (e.g.: Logitech K480) act as such inside RetroArch. This configuration option allows users to manually select a specific input device to act as a physical keyboard instead of a gamepad, which is handy when emulating computers as opposed to consoles.
+- APPLE: Add App Category to a few places it should have been
+- APPLE/MFI: Prevent crash when controller player index is unset (-1)
+- AUTOMATIC FRAME DELAY: Helped delay to decrease easier when it should and helped delay to stay put when it should when triggering pause & menu with or without pause & fast-forward & slow-motion & geometry change
+- AUTOMATIC FRAME DELAY: Recalibrate delay on video reinit (fullscreen toggle and such)
+- AUTOMATIC FRAME DELAY: Show (x effective) only in menu item and not in dropdown list items when auto is enabled
+- CHEEVOS: Allow repositioning of RetroAchievement notifications
+- CHEEVOS/MENU: Add Achievements Visibility submenu option
+- CHEEVOS/MENU: Startup Summary split off from Verbose Mode, added option to hide for games with zero core cheevos
+- CHEEVOS/MENU: 'Unlocks/Mastery' split into two options
+- CHEEVOS/MENU: 'Account/Login Messages' split off from 'Verbose', gated all login success/error messages
+- CONFIG/INPUT: Unload restores current global config
+- CONFIG/INPUT/OVERRIDES: Removing a file does not unload current override
+- CONFIG/INPUT/OVERRIDES: Saving an empty override removes the file if it exists, and won't save when it does not
+- CONFIG/INPUT/OVERRIDES: Prevent the use of RUNLOOP_FLAG_OVERRIDES_ACTIVE with appendconfig
+- CORE OPTION: Core option setting type checks. Added checks for getting and setting core option type, since otherwise there will be a crash on close content after browsing to core option categories. Also fixed the no-show switch icon for lone wolf "Lock Installed Core".
+- CLI: Update selected save slot when start with cli --entryslot
+- CLI: Decouple config CLI append and config overrides
+- CLI/MENU/XMB: Stop showing bogus previous icon on CLI launch
+- D3D9: Fixed display driver scissoring implementation  - can now accept 0 width/height
+- D3D10: Fixed display driver scissoring implementation - can now accept 0 width/height
+- D3D11: Fixed display driver scissoring implementation - can now accept 0 width/height
+- D3D11: Fixed build when HAVE_DXGI_HDR is not defined
+- D3D11: Moved waitable swapchain waiting to happen always even when resizing swapchain
+- D3D12: Fixed display driver scissoring implementation - can now accept 0 width/height
+- D3D12: Fixed window scaling issue, which was caused by swapchain resize function not using the same flags (waitable swapchain) as swapchain creation
+- D3D12: Fixed swapchain scissoring issue (visual + crash) after manually resizing window to smaller size
+- D3D12: Fixed eventual crashing issue on video reinit when swapchain is being freed
+- D3D12: Moved waitable swapchain waiting to happen always even when resizing swapchain
+- EMSCRIPTEN: Add HAVE_PATCH support for Emscripten
+- EMSCRIPTEN: Add BSV/Replay support for Emscripten
+- EMSCRIPTEN: Add command and stdin_cmd features to emscripten RA. update libretro.js to show how commands could be sent over emscripten stdin.
+- FRAME DELAY/MENU: Show Frame Delay without VSync
+- GENERAL: Start unpause restriction. Limit the feature using retropad start button to unpause RA to the setting it was made for; "pause on controller disconnect".
+- GENERAL: Savestate thumbnail aspect ratio fallback. Thanks to at least one certain core that announces aspect ratio as 0, we have to add the same fallback in savestate thumbnails that is happening elsewhere in normal video driver use anyway.
+- GENERAL: Add support for system subdirs per core/database. Added the trivial and graceful automatic ability to send a different system directory to cores if it exists, for keeping the system dir more sane. First by using the core/library name just like in configs and saves, and then by playlist name, like in thumbnails, and of course default to the current global system dir.
+- GENERAL: Ignore system subdir replacement if subdir has subdirs.
+- GENERAL: Restore cached video driver always on quit
+- IOS: Include 'Update Core Info Files'
+- IOS: Fix #14778 - In addition to sending logs to asl_client, add them to the logfile.
+- IOS/VULKAN/MOLTENVK: Vulkan video driver on iOS
+- LATENCY/PREEMPTIVE FRAMES: Add Preemptive Frames to Latency Settings. RunAhead alternative that reruns core logic to "rewrite history" before the current frame. Frames are only rerun when the controller state changes, so it's faster overall.
+- LATENCY/PREEMPTIVE FRAMES: Call retro_run before retro_serialize (#14893). Fixes preemptive frames not starting up with a few cores
+- LIBRETRO-COMMON/VFS/FILESTREAM: Fixes filestream_vscanf regression
+- LOCALIZATION: Updates
+- LOCALIZATION: Enable localization of video rotation, orientation, and aspect ratio option values.
+- LOCALIZATION: Mixer stream localization also added
+- LOCALIZATION/MENU/HELP: Context dependent help text for audio and video drivers. Language corrections
+- LOCALIZATION/MENU/LANGUAGE: Language submenu now shows the progress of translated strings for each language.
+- LOCALIZATION: Help texts now localizable through Crowdin.
+- LIBRETRO: Enable RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME for libretro-video-processor
+- LIBRETRO/HW: Add GET_HW_CONTEXT_NEGOTIATION_INTERFACE_SUPPORT. Works around issues in v1 interface where it was not possible to
+query what frontend would do when faces with newer interface versions. This env-call gives stronger guarantees how things have to work.
+- INPUT: Allowing keyboard hotkeys to work without hotkey modifier if modifier is only mapped to RetroPad
+- INPUT: Allowing keyboard hotkey keys for typing if hotkey modifier is set to keyboard but not pressed
+- INPUT: Allowing keyboard RetroPad keys for typing if emulated device type is "None"
+- INPUT/AUTOCONFIG: Check for 'enable_hotkey' also from autoconf binds
+- INPUT/BLUETOOTH: Fix a crash in for BT HID devices. (#14922) pad_connection_destroy() frees slots, no need to free it again.
+- INPUT/BSV/REPLAY: Don't start video recording when BSV recording starts
+- INPUT/BSV/REPLAY: Don't double-record inputs in BSV recording
+- INPUT/BSV/REPLAY: Don't autoload states if a BSV file is being played back or recorded
+- INPUT/BSV/REPLAY: Moved BSV initialization before autoload code
+- INPUT/BSV/REPLAY: Don't trigger autoload code if there is bsv movie state
+- INPUT/BSV/REPLAY: Allow for both -e and -R to start a BSV file recording at a state
+- INPUT/BSV/REPLAY: Add keyboard recording support to BSV
+- INPUT/BSV/REPLAY: Fix BSV playback from a starting state for DOSbox
+- INPUT/BSV/REPLAY: Associate states with replays. Now states can be saved and loaded during replay recording and playback in a way that keeps the integrity of the recording. Recordings also have a (moderately) unique identifier associated with them.
+- INPUT/BSV/REPLAY: Add checkpointing feature for replay recordings. If cores are not deterministic, or if they only have bounded determinism, we can obtain less drift if replay files also contain periodic checkpoint states.  These are configured by the new retroarch setting replay_checkpoint_interval (measured in seconds).  States are inserted into the replay file in between frames. This also fixes the settings display for the replay autoincrement max keep setting.
+- INPUT/FRAMEADVANCE: Use non-rendering pause mode when frameadvance is triggered
+- INPUT/HOTKEYS/OVERLAYS: Do not block input overlay hotkeys
+- INPUT/HOTKEYS: Hotkey blocking correction. Turned out the previous hotkey blocking changes worked properly only with winraw driver and not the rest (at least with Windows), because input_keyboard_event() could be called at the wrong moment, and thus storing keyboard menu press there broke the separation of controller Guide menu button and keyboard menu key. Also allowed the blocking to work in both directions so that controller hotkeys won't get blocked if only keyboard has "enable_hotkey" bind.
+- INPUT/LINUX/UDEV: Fix udev guns input when id_mouse is not id_joystick
+- MENU: Rename 'Standalone Cores' to 'Contentless Cores'
+- MENU: Music files should also obey builtin_mediaplayer_enable (#14967) Disabling the built in media player should be possible for music files
+as well. Without this, sound files can not be opened from file browser with cores that support them.
+- MENU: Relocated items to a more logical order
+- MENU: Corrected some title capitalizations (when/before/after are not low case, but for/the/a are)
+- MENU/AUDIO: Add dropdown menu for audio device
+- MENU/HELP: Help for turbo modes (#14919). Help text added for each of the selectable turbo modes.
+- MENU/INPUT: Add unified back action to all menu drivers. Usability boost for all menu drivers resulting in similar behavior as with Ozone currently, which is pressing back/cancel enough the selection jumps first to Main Menu and when pressed again jumps to the first item, so that when a core is running, Quick Menu is very quickly accessible from anywhere. And when core is not running, the first item would be Load Core.
+- MENU/INPUT: Override bind save + menu manager overhaul
+- MENU/INPUT: Allowed and fixed input bind saving to overrides
+- MENU/INPUT: Overhauled override menu
+- MENU/INPUT: Pressing Start on the top active file entry reloads current overrides as startup would
+- MENU/SUBLABELS: All under "Configuration File" + moved "Reset to Defaults" to bottom
+- MENU/SUBLABELS: Quick Menu > Controls > Port x Controls
+- MENU/SUBLABELS: Port x Controls > Device Type
+- MENU/RGUI: Fix disabled menu item color. The effect was not working properly, since transparency meant using the core output color as background.
+- MENU/XMB: Horizontal icon animation fix
+- MENU/XMB: Fixed playlist manager icons to take Explore Views into account properly
+- MENU/XMB: Changed XMB Explore View title to match Ozone
+- MENU/XMB: Added "Switch Icons" option
+- MENU/XMB: Fix MENU_ACTION_CANCEL when search is active. Nasty issue discovered in XMB which broke search term cancelation.
+- MENU/XMB: Layout corrections:
+- MENU/XMB: More room for longer item labels and values
+- MENU/XMB: "Core Downloader" has extra space for item and "installed" indicator
+- MENU/XMB: Fixed "Menu Scale Factor" to not require restarting to get the actual end result
+- MENU/XMB: Adjusted scale factor to behave better with both layouts
+- MENU/XMB: Fixed savestate thumbnails and adjusted vertical fade factor in "Handheld" layout
+- MENU/XMB: Changed thumbnail shadow to outline and tightened fullscreen thumbnail margins
+- MENU/XMB: Adjusted global shadow opacity
+- MENU/XMB: Remove "Framebuffer opacity" from XMB as it does not use it. Also, rename the corresponding menu title, since "framebuffer" is not that intuitive.
+- MENU/OZONE: Fixed playlist manager icons to take Explore Views into account properly
+- MENU/OZONE: Refresh thumbnail on close content hotkey
+- MENU/OZONE: Ozone footer enhancements (#14926). Add Help button (Select) and Reset to Default (Start) to footer where applicable.
+- MENU/OZONE: Ozone footer enhancements (#14934). Display Help footer only if there is actual info to be displayed, either actual help, or sublabel if it is not visible otherwise.
+- MENU/OZONE: Ozone footer enhancement: Scan button (#14949). Display Scan button in footer when it is applicable.
+- MENU/OZONE: Add Clear button to Ozone footer (#14947). Add indication of Clear button when it is applicable (currently: keybinds).
+- MENU/MATERIALUI: Added missing Favorites+History icons in playlist manager
+- MENU/MATERIALUI: Added "Switch Icons" option
+- MENU/CHEATS: Added missing icons in cheats (Delete + Copy After/Before)
+- MENU/CHEATS: Fixed label capitalization in cheats (Add New After/Before This)
+- MENU/SOUNDS: Add scrolling sounds for RGUI, XMB, MaterialUI and Ozone.
+- MENU/SOUNDS: Better scrolling sound implementation, add new 'notice back' sound
+- MENU/SOUNDS: Scroll sound fixes. Correctly get list size in xmb.c for playing scrolling sound when switching categories, play the scrolling sound when pressing cancel in ozone, play the sound when scrolling with ZL and ZR, play the correct sound when scrolling with L- MIYOO: L3/R3 support for Dingux Gamepad controller device.
+- MENU/WIDGETS: Show square sized widget on volume mute. Volume widget is currently fixed size always, and thus showing a lot of empty space when muting, therefore shorten the box to icon size only when muting.
+- NETWORKING: Call ssl_socket_close for SSL sockets
+- NETWORKING/CHEEVOS: net_http - Temporary fix for cheevos crash. Don't use new timeout/poll code for cheevos HTTP requests.
+- NETWORKING/MENU: Network information cleanup:
+- NETWORKING/MENU: Remove extra space from : delimiter
+- NETWORKING/MENU: Trim useless/duplicate garbage from the end of ipv6 address. Windows shows %[adapter number], Linux shows %[adapter name], which already shows before the address
+- NETWORKING/STDIN: Add LOAD_STATE_SLOT N command to stdin/network protocol
+- OSD/STATISTICS: Add Run-Ahead data to on-screen statistics
+- OSD/STATISTICS: Notification font + statistics adjustments
+- OSD/STATISTICS: Finetuned statistics layout to be more compact and aligned
+- OSD/STATISTICS: Group Run-Ahead and Frame Delay as "Latency"
+- OSD/STATISTICS: Try to scale font as small as possible/readable if stats won't fit
+- OSD/STATISTICS/FONT: Allow reseting notification font with RetroPad Y to "null", which uses the fallback pixel font
+- OSD/STATISTICS/FONT: Show "Default" instead of empty with default font
+- OSD/STATISTICS/FONT: Start browsing font from assets instead of root
+- OSX/MACOS: Steam platform support
+- OSX/MACOS: Set LSApplicationCategoryType to games
+- OSX/MACOS: Include OpenGL video driver on Metal macOS builds (10.13 and higher)
+- OSX/MACOS: Fix a few mac windowed mode settings -
+- OSX/MACOS: Use "Remember window position and size" setting (fixes #14806)
+- OSX/MACOS: Implement window opacity
+- OSX/MACOS: Enable "Show window decorations" toggle
+- OSX/MACOS: Hide "Disable composition" option (osx does not support disabling composition)
+- OSX/MACOS: Make sure to use the file system path name, not the URL name
+- OSX/MACOS/IOHIDMANAGER: Various memory access fixes to prevent crashes (#14459) (#15000). Prevent double free and null dereference when the controller is quickly reconnected. Handle error when controller device query returns null instead of crashing.
+- OSX/MACOS/METAL BUILD: Fix input events (keyboard/mouse) sometimes going lost when switching between fullscreen and windowed mode. Fixes lots of longstanding issues
+- OSX/MACOS/OPENGL: Fix for fullscreen OpenGL driver in Metal macOS build
+- OSX/MACOS/VULKAN/MOLTENVK: Default to Vulkan driver when available (for 10.13 Metal Universal build)
+- OSX/MACOS/VULKAN/MOLTENVK: Updated Vulkan on Metal for OSX via MoltenVK
+- OSX/MACOS/VULKAN/MOLTENVK/HDR: Fix non-HDR colors
+- OSX/MACOS/SLANG: The change to apply shaders would be executed and then a command to apply shaders would immeidately be enqueued, to run asynchronously
+after the current event handler, which then did exactly the same. Fixes issue #14789 - Turning on shaders on Metal build 1.14.0 stable for Mac OS will slow emulation drastically thing, creating a busy loop.
+- PS2: Avoid loading extra drivers when not needed. Fixed a bug where it wasn't using the variable extra_drivers, for loading the specific IRX needed drivers. This is increasing compatibility with some specific PS2 models that sometimes fail when loading cores.
+- PS3/PSL1GHT: Add improvements to the RSX driver (#14965)
+- PS3/PSL1GHT: Add modern_alpha_blend and modern_opaque rsx shaders
+- PS3/PSL1GHT: Add perf improvements to the rsx driver
+- PS3/PSL1GHT: Add RSX video driver
+- PS3/PSL1GHT/MENU/XMB: Do XMB menu scaling for psl1ght
+- PS3/PSL1GHT: Update Makefile to use latest shaders and more UI menu options
+- PS3/PSL1GHT: Default folders normalization
+- PS3/PSL1GHT: Fix video rotation
+- PS3/PSL1GHT: Fix HTTP download
+- QB/CONFIGURE: Add new flags - HAVE_UPDATE_CORE_INFO, ASSETS_DIR, FILTERS_DIR
+- RECORDING: Add recordings to video history playlist
+- REWIND: Don't take rewind steps while menu pause active
+- RUNLOOP: Currently when core is paused, video output will be stopped completely too, making it impossible to animate widgets while paused, therefore:
+- RUNLOOP: Added a new runloop state for pause which renders last cached frame
+- RUNLOOP: Allowed rewinding while paused so that it acts like backwards frameadvance. Also moved rewind step taking before menu iteration so that steps won't be lost while in menu when menu_pause is disabled
+- RUNLOOP: State load and reset while paused will forget pause for x frames in order to show proper output
+- RUNLOOP: Allowed reading pause hotkey while menu is active
+- RUNLOOP: Allowed reading screenshot hotkey while menu is active
+- RUNLOOP: Joined 2 fullscreen hotkey checks to one (Any ideas why they were separated for paused and non-paused states, since one works fine for both..?)
+- RUNLOOP: Implement GET_HW_CONTEXT_NEGOTIATION_INTERFACE_SUPPORT. Fairly trivial. Just report the latest version.
+- SAVESTATES: State slot hotkey adjustments -
+- SAVESTATES: Allow selecting -1 Auto slot with hotkeys
+- SAVESTATES: Allow wrap-around from -1 to 999 and backwards
+- SAVESTATES: Show failure message when trying to load a state that does not exist instead of plain "Loading state"
+- SAVESTATES: Shorten the duration of slot change notification
+- SAVESTATES: Change the widget type to the same type as shader toggle for better back and forth action. Closes [Widgets] Save state slot switcher
+- SHADERS: Append Preset feature
+- SHADERS: Prepend Preset feature
+- SHADERS: Shader Preset - Wildcard Replacement in Paths on Load. When a simple preset loads, text wildcards which are found in paths inside the presets will be replaced with values coming from the current RetroArch context. The replacement will be executed on both texture paths and reference paths.
+- SHADERS/SLANG/SPIRVCROSS: Update to latest SPIRV-Cross, fixing Metal shader compilation issues along the way
+- STATICALLY LINKED/SALAMANDER: Fix salamander config save on fork for static platforms
+- TVOS/VULKAN/MOLTENVK: Vulkan on tvOS
+- VIDEO: Allow manual video swap interval forcing. The addition of auto swap interval effectively prevented manual forcing, which is beneficial when the rate is not reported properly. Therefore use the interval in the calculation only when using automatic interval.
+- VULKAN: Fix crash when using multiple physical devices and HW core (#14889) 
+- VULKAN: Detect if wrong PhysicalDevice is returned.
+- VULKAN: Actually query physical device before creating core device.
+- VULKAN: Define and implement v2 of context negotiation interface
+- VULKAN: Add v2 of context negotiation interface.
+- VULKAN: Add vkEnumerateInstanceVersion symbol.
+- VULKAN: Implement v2 context negotiation
+- VULKAN: Use compute shaders to upload RGB565
+- VULKAN: Fix regression with RGB565 and OriginalHistory.
+- VULKAN/WAYLAND: Don't clamp the number of requested images. Due to an unfortunate "feature", MESA always reports 4 as the Vulkan surface's minImageCount in Wayland.
+However, values of 2 and 3 work perfectly well, even if they are out of spec, providing way better latencies when using the Vulkan backend on Wayland.
+So this removes the artificial clamping that was being done to desired_swapchain_images, because it's not really necessary and was causing very noticeable input lag on Wayland+Vulkan.
+- VULKAN/MENU/RGUI: Fix RGUI on Vulkan on platforms that don't have _pack16 VkFormats
+- VULKAN/MACOS/OSX: avoid using _PACK16 pixel formats on platforms without them
+- WAYLAND: On scaled desktops the wayland backend deciding to resize based on values multiplied by the scale factor twice. Resulting in continuous attempts to rebuild the swapchain when in fullscreen.
+- WAYLAND: Wait for splash screen configuration. Before, configuration (resize) events for the initial wayland window could happen before or after set_video_mode which could result in a small or corrupted window. Now we make sure that the initial window has processed it's resize events before window size is set by set_video_mode.
+- WAYLAND: Changes the initial window to show a RetroArch logo copied from the icon of the X11 backend.
+- WAYLAND: Build pointer-constraints and relative-pointer protocols.
+- WAYLAND/GL: GL is sometimes not rescaling property (Super + Left).
+- WIN32: Ignore window limiting with fixed position. The other resizing part already took this into account, but WM_GETMINMAXINFO did not.
+- WIN32/INPUT: Add support for mouse button swap
+- WIN32: Fix keyboard event characters. Added sending key chars to all input drivers (currently they only send scan codes), and also missing mods for raw.
+- WIN32: Fix restart if path has spaces. CreateProcess does not like to have anything executable path related in the second parameter lpCommandLine if the path has spaces. Thus strip everything from args except the actual parameters.
+
+# 1.14.0
+- AUDIO/COREAUDIO/APPLE: Allow coreaudio3 driver to work with audio devices that have 2 or more output channels
+- CHEEVOS: Fix construction of Cheevos badge path
+- CLI: Fixed not getting any output when running --version or --features without --verbose
+- CLI: Fixed crash when running empty - parameter (it proceeded to content loading)
+- CLI: Reformatted --features to require less rows and to be more consistent
+- CLI: Added -V shorthand for --version
+- CLI: Tab removal + whitespace nits
+- CONFIG/MIDI: Prevent MIDI startup error with old configurations 
+- D3D11: Fix when using shaders with TATE mode arcades etc
+- D3D12: Fix when using shaders with TATE mode arcades etc
+- D3D12: Added support for break on errors  (development aid - define DEVICE_DEBUG to use)
+- D3D12: Added support for DRED (device remove extended data) (development aid - define DEVICE_DEBUG to use)
+- D3D12: Made D3D12 viewport and scissors to behave more like Vulkan drivers (or be more correct)
+- D3D12: Fixed validation error on start up due to buffers not being setup correctly for one frame
+- D3D12: Fixed some shaders not appearing with the d3d12 driver - this reintroduces a validation error though but it seems to work as in not crash and is the old RA behaviour. Guess we need a different way of fixing the validation issue.
+- DATABASE/EXPLORE/VIEW: Bugfix - RGUI did not clear thumbnail on non-playlist items such as Save and Delete
+menu_explore_get_entry_playlist_index() returns -1 on invalid entries, but the variable where it was stored was unsigned
+- DATABASE/EXPLORE/VIEW: Bugfix - XMB+Ozone cleared thumbnail in Quick Menu when navigating away from Run
+- DRM/ODROID GO2: Implement get_video_size for DRM GL context driver
+- FASTFORWARD: Restore framelimit on fastforward toggle. Fast-forward was broken after toggling vrr_runloop off, since it will force frame limit to 1.0 (even on every frame) and never restores it. So let's make sure the wanted ratio is applied when toggling FF (Fastforward).
+- FFMPEG CORE: Fix runtime error in FFmpeg core when build with FFmpeg n5.1.2 and OpenGL ES
+- GFX/VIDEO FILTERS: (picoscale_256x_320x240) Added snn function to upscale Fuse (ZX Spectrum) core borderless output to 320x240. ZX Spectrum resolution of 256x192 was previously unsupported.
+- HOTKEYS: Further reorder internal hotkey items for consistency and removed SEND_DEBUG_INFO, OVERLAY_NEXT and OSK from visible hotkey bind list. "Send Debug Info" stuff is removed as much as possible without breakage due to translation files.
+- INPUT/AUTOCONFIG: Disable 'pause on controller disconnect' by default - was enabled by default on 1.13.0
+- INPUT/MENU: Device Index menu refactor
+- INPUT/OVERLAY: Fix analog drift blocking touch input (could occur on overlay_next if physical inputs shown on overlay)
+- INPUT/OVERLAY: Fix overlay_next buttons lighting up in unison
+- INPUT/OVERLAY: Skip meta keys in input_overlay_add_inputs (not supported by input_state_internal)
+- INPUT/WINDOWS/WINRAW: Fix mouse position when using input overlay with mouse cursor
+- INPUT/WINDOWS/WINRAW: Fixed mouse position to use the same method required for menu items and pointer when simulating input overlays with mouse, since it won't work with multi mouse method
+- INPUT/WINDOWS/WINRAW: Fixed passing mouse position to core also when using aforementioned method
+- LEAPFROG: Add Leapfrog (LFx000) Target
+- LOCALIZATION: Updates
+- LOCALIZATION/INPUT/IME/MENU/ONSCREEN KEYBOARD: Extended IME and Korean OSK
+- MENU: Cleanup of help texts
+- MENU: Allow toggling info off with the same button
+- MENU: Allow menu wallpaper/background reset. Let's also remove the current wallpaper from the screen when pressing Start.
+- MENU: Null driver shows with different color (Added for all menus the ability to show "disabled" items with a muted color)
+- MENU/DRIVERS: Menu driver first, Audio Resampler removed because it is enough to exist under audio settings
+- MENU/INPUT: Moved "Confirm Quit" to Input menu
+- MENU/INPUT/HOTKEYS: Input hotkey menu completely overhauled to keep related entries together, and also adjusted some labels and sublabels
+- MENU/OVERLAY: Fix overlays behind menu without core running. "Show Overlay Behind Menu" is currently broken with Ozone and XMB (with any other color theme than Plain) when running without a core.
+- MENU/MATERIALUI: Fix home screen on first startup - no more stray entries
+- MENU/OZONE: Allowed drawing sidebar and thumbnail bar background color also when core is running
+- MENU/OZONE: Stopped using different padding and position for savestate thumbnails vs imageviewer
+- MENU/OZONE: Removed gradient background effect when core is running, because some themes already have gradient background, which creates ugly rough steps
+- MENU/OZONE: Fixed "Gray Light" theme from using the same background as "Gray Dark", which makes selection cursor near impossible to see
+- MENU/OZONE: Some whitespace corrections
+- MENU/UX: Extend OFF menu value colors
+- MENU/UX: Menu icon improvements - Menu Visibility icons (Quick Menu + Settings)
+- MENU/UX: Menu icon improvements - Playlist Manager icons
+- MENU/UX: Menu icon improvements - Explore icon as database icon
+- MENU/UX: Menu icon improvements - View and filter icons as cursor icon (folder icon in GLUI)
+- MENU/UX: Menu icon improvements - View save + delete icons
+- MENU/UX: Menu icon improvements - Moved Explore + Views below Standalone Cores
+- MENU/UX/OZONE: Removed icons from menus where others items don't have icons, and added icons to menus where the rest have icons
+- MENU/UX/OZONE: Changed the way "no icon" is handled from kludgy way of not drawing SUBSETTING icon
+- MENU/UX/XMB: Changed playlist entry index positioning to bottom right when thumbnails are in vertical mode, because big lists will overlap with arrow and current "breadcrumb" icons when the position is next to current selection
+- MENU/UX/XMB: Added a rather nasty hack to prevent showing wrong icons under Explore as "breadcrumb" icon
+- MENU/UX/XMB: Optimized certain icon drawing loops (Main horizontal icons were looped even when not visible, and all previous "breadcrumb" icons were looped when only one certain was needed)
+- MENU/UX/MATERIALUI: Fixed showing icons where there should not be any (Waitable Swapchains, Show Recording + Streaming)
+- OSX/MACOS: Fixed Cocoa keyboard not allowing to map Analog stick
+- PS2: Use the recently created ps2_drivers which makes easier the loading and init of all the drivers: Memory Card, USB, HDD, Audio, Controllers
+- PS2: Adds exFat support for USB, and probably solves some unexpected issues when using an HDD driver for booting cores/games.
+- SDL GFX: Fix no menu on start/blank screen issue. 
+- SRAM: Don't init SRAM saving without content (gets rid of the redundant logging)
+
+# 1.13.0
+- 3DS: Remove debug button combo to shutdown RA
+- 3DS: Remove MaterialUI as per MrHuu recommendation
+- ANDROID: Enable 'Vibrate On Key Press' by default
+- ANDROID: Turn 'Threaded Video' off by default
+- CHEEVOS: Upgrade to rcheevos 10.5
+- COMPILATION: Fixed compiling with --disable-menu
+- CONFIG: Don't show override notification with appendconfig alone
+- DATABASE/PLAYLISTS: Playlist + database changes - Cleanup 'entry_slot', fallback label + logging
+- FRONTEND: Fix default remaps folder for various cores: remap should be nested in config folder
+- GFX/VIDEO FILTERS: Prevent video filter init if game is not running
+- HOTKEYS: Fix shader toggle and add hotkey + sublabel
+- HOTKEYS: Cleanups and corrections - Keep hotkey pause and menu pause separate in order to not trigger unwanted pause when toggling menu regardless if menu will pause or not
+- HOTKEYS: Cleanups and corrections - Allow unpausing with Start (makes resuming more convenient after controller disconnect if menu does not pause)
+- IOS13+: Pointer movement accuracy. iPad Trackpad Pointer Movement Accuracy through absolute location (for iOS 13.4 and above)
+- IOS13+: Adds iPad Trackpad Support to iOS13 Project (for iOS 13.4 and above)
+- INPUT: Fixed the way devices were previously indexed. Input devices were only being indexed in order and would stop at the first time an input has no device connected to it. The problem is when a device gets disconnected, that input will have no devices connected to it, but the next input may still have a device connected. So, that makes changing the port of the currently connected devices impossible.
+- INPUT/AUTOCONFIG: Add option for pause on controller disconnect
+- INPUT/AUTOCONFIG: Driver independent disconnection notification. Should show disconnect notification now properly on Windows with XInput and/or DirectInput pads
+- INPUT/HID: Added usb hid controllers for the famous ZeroDelay encoder and also for "Kade: Kick Ass Dynamic Encoder" to be able to use some custom arcade sticks.
+- INPUT/OVERLAY: Add eightway area types.
+- INPUT/OVERLAY: Ignore hitboxes with zero area. I.e. Set 'reach_x' or 'reach_y' to zero to ensure no hitbox math is done. This simplifies designating animation-only descriptors (e.g. for eightway areas) or obsolete descriptors.
+- INPUT/OVERLAY: Add 'reach' and 'exclusive' for hitboxes. Allows stretching hitboxes and handling their overlap.
+- INPUT/OVERLAY: Fix overlay next_index for unnamed targets
+- INPUT/MENU: Addition to analog stick menu navigation
+- INPUT/MENU: Enable menu navigation also with right analog stick
+- INPUT/MENU: Add option for swapping menu scrolling buttons
+- LOCALIZATION: Updates
+- LOCALIZATION: Add Hungarian language option
+- MENU: Thumbnail fullscreen toggle behavior correction
+- MENU: Consistent left-right scrolling for Quick Menu items
+- MENU: Remove useless sublabel from System Information
+- MENU: Improve widget appearance with missing assets
+- MENU/QT/WIMP: Remove SSL/TLS check at startup
+- MENU/OZONE: Show metadata helper in footer only with second thumbnail
+- MENU/OZONE: Footer improvements - Add "Cycle thumbnails" helper when suitable
+- MENU/OZONE: Footer improvements - Show "Search" helper only when search function is enabled
+- MENU/OZONE: Footer improvements - Fix "Thumbnails available" helper for save states
+- MENU/OZONE: Footer improvements - Tighten padding between icon and title, and widen between helpers
+- MENU/OZONE: Launching anything from a View no longer throws Quick Menu off the screen
+- MENU/OZONE: Save state thumbnails in slot dropdown obeys fullscreen toggle properly when content launched via CLI
+- MENU/OZONE: Save state thumbnail dropdown won’t allow fullscreen toggle when it shouldn’t
+- MENU/OZONE: Selection position remembering in non-playlists won’t flash the first entry
+- MENU/OZONE: Remember selection per main tabs
+- MENU/OZONE: Remove incomplete assets warning
+- MENU/OZONE: Add option to adjust cursor memory when changing menu tabs
+- MENU/OZONE: Further extend texture support for Core Option categories
+- MENU/XMB: Remove incomplete assets warning
+- MENU/XMB: Add truncate playlist name option
+- MENU/XMB: Improve background image selector
+- MENU/XMB: Add option to adjust cursor memory when changing menu tabs
+- MENU/XMB: Further extend texture support for Core Option categories
+- MENU/MATERIALUI: Remove incomplete assets warning
+- OSX: Fixed Z/X keys not working on the macOS port
+- OSX: Fixed RETROK_LMETA not working on macOS port. The RETROK_LMETA key was not defined in the rarch_key_map_apple_hid
+- OSX: Fix broken fullscreen mode in macOS Ventura
+- PS2: Fix Error saving remaps and runtime logs
+- PS3: Fix Core Remap Overwrite Fail
+- QB: Don't fail if OSDependent/OGLCompiler libraries are not present
+- SCANNER/PS1: Improved scanning of PS1 discs
+- SCANNER/PS2: Added serial scanning of PS2 discs - should now scan DVDs and other discs which were previously missed
+- THUMBNAIL: If you rename title, you cannot use the thumbnail image. because the thumbnail filename and the title must be the same.
+If there is no thumbnail with title, find the thumbnail image with rom-name. This has nothing to do with IME.
+- THREADED VIDEO/GLCORE: Fix regression 'Shader presets dont load, when video driver is set to glcore'
+- VULKAN: Fix HDR inverse tonemapping. Only skip tonemapper if HDR10 is explicitly enabled by last shader pass. Otherwise, we are simply just inheriting the bit-depth of the swapchain.
+
+# 1.12.0
+- CONFIG/CLI: Allow use of --appendconfig with override cfgs instead of getting ignored
+- CONFIG/LOGGING: No more console startup logging if logging to file
+- CONFIG: Saves config on exit only once instead of (worst case scenario) 3 times
+- DATABASE/EXPLORE/VIEW: Add View feature - Add saving of a filter set in the Explore menu into a so called "View" file which then gets listed alongside playlists. This also adds the ability to filter a category by range in the Explore menu and not just filter on exact matches.
+- FILEBROWSER: Fix regression - certain extensions keep disappearing
+- IOS: New modern iOS version (targeting iOS 13 and up), leverages Swift
+- IOS: Fixes to iOS toolbar
+- IOS16: Add iOS 16 lock screen widget
+- IOS13+: Added emulator keyboard
+- IOS13+: Add JIT support for non-jailbroken devices
+- IOS13+: Added support for touch mouse handler
+- IOS13+: Changed click-and-drag behavior to double tap hold and drag
+- INPUT/HAPTIC/OVERLAYS/ANDROID: Improve haptic feedback for input overlays
+- LINUX/MALI FBDEV: Add conditional support for OpenGL ES 3.x
+- LOCALIZATION: Updates
+- LOCALIZATION/ENGLISH: Add British English language option
+- LOGGING/QT: Increase log buffer to 2048 characters - Vulkan validation layer
+  messages output correctly now.
+- MENU/XMB: Remember selection per main tabs. Addresses the following : collection playlists can contain hundreds or thousands of items. When scrolling through one, pressing left or right by accident can be common. This resets the playlist to the top
+- MIST/STEAM/STEAMDECK: Don't expose Black Frame Insertion (BFI) if we are running on a Steam Deck
+- NETWORKING/WINDOWS: Disable poll support for MSVC 2010 and earlier. WSAPoll is not supported on Windows XP and earlier.
+- NETWORKING/WIIU: Fix socket_connect_with_timeout for WIIU
+- NETWORKING/WIIU: Fixes RetroAchievements login 
+- NETWORKING/WIIU: Fixes other online updater functionality
+- SAVESTATES/NOTIFICATIONS: Add delay to savestate notifications, so that GPU savestate screenshots stay untouched
+- SAVESTATES/SCREENSHOTS: Avoid 'video_gpu_screenshot' with savestates. Allow GPU screenshots with savestates only when there is no other way of getting a screenshot.
+- SCREENSHOTS/VULKAN: Unload screenshot widget texture early. Fixes Vulkan crash when closing content while a screenshot widget is still on-screen
+- SCREENSHOTS/VULKAN: Fix screenshot widget crash when ticker animating
+- WAYLAND: Set correct app ID
+- WIIU: Add some missing default directories
+- WIIU: Get mkdir working on WiiU (directory creation)
+
+# 1.11.1
+- GENERAL: Fix DEFAULT_FILL_TITLE_MACRO
+- NETWORKING: Add the const qualifier to some function parameters
+- NETWORKING/NETPLAY/UPNP: Add a private or CGNAT address warning to UPnP
+- SAVESTATES/SCREENSHOTS: Avoid 'video_gpu_screenshot' with savestates
+- UWP: Better 'Save on quit' fix
+
+# 1.11.0
+- 3DS: Add unique ID's
+- 3DS: Add bottom menu options
+- 3DS: Set bottom_asset directory default
+- 3DS: Only enable internal counter with CONSOLE_LOG defined
+- 3DS: Set default bottom font values
+- 3DS: Fix CIA installation issues
+- 3DS: Support latest libctru 
+- ANDROID: Add HAVE_ACCESSIBILITY
+- ANDROID: Gingerbread support
+- ANDROID: Touchpads support
+- ANDROID: Builtin Xperia Play autoconfig profile
+- ANDROID: Disable Feral GameMode for Android - only available on Linux
+- ANDROID: Add a configurable workaround for Android reconnecting devices
+- ANDROID/FDROID: Add F-Droid metadata to repo in Fastlane format
+- AUDIO/AUDIO MIXER: Add missing locks for thread safety
+- AUDIO/AUDIO MIXER: Fix audio mixer memory leak + remove redundant 'single threaded' rthreads implementation
+- AUTOSAVE: Change/improve exit behavior of autosave thread - if condition variable is signaled, the loop is ran another last time so we can do a final check/save before stopping the thread.
+- CDROM: Fix memory leak caught with asan - buf passed to filestream_read_file
+- CORE INFO/NETPLAY: Ensure current core info is initialized at runloop_event_init_core when netplay is enabled
+- CHEEVOS: Upgrade to rcheevos 10.4
+- CHEEVOS: Allow creating auto savestate in hardcore
+- CHEEVOS: prevent invalid memory reference if game has achievements but core doesn't expose memory
+- CHEEVOS: Release achievement badge textures when video driver is deinitialized
+- CHEEVOS: Re-enforce hardcore limitations once achievements are loade
+- CHEEVOS/MENU/MATERIALUI: Show achievement badge icons in MaterialUI driver
+- D3D9: D3D9 has been split up into two drivers - D3D9 HLSL (max compatibility, no shader support yet) and D3D9 Cg (dependent on deprecated Nvidia Cg runtime library)
+- D3D9/HLSL/XMB: XMB fix
+- D3D9/CG: D3D9 Cg driver fixed
+- D3D11: Fix overlay not showing up
+- D3D11/12: Reduce lag with WaitForVBlank - this rather simple addition seems to make D3D11/12 very very close to Vulkan/GLCore regarding input lag.
+- D3D11/12: Add waitable swapchains and max frame latency option
+- D3D11/12: Make waitable swapchains optional
+- DATABASE: Reformat 'rdb_entry_int' - Nitpick adjustments for database entries: Capitalize "Release Date", and remove space before : from Release Date rows which use integer
+- DATABASE/EXPLORE: Allow On-Demand Thumbnails in Explore menu
+- DATABASE/EXPLORE/MENU/OZONE/XMB/RGUI: Explore menu thumbnails
+- DISC CONTROL: Better Disc Control append focus
+- DOS/DJGPP: Add a workaround for libc bug
+- AUTOMATIC FRAME DELAY: Added slowmotion resiliency
+- AUTOMATIC FRAME DELAY: Added string representation for seeing the current effective delay without opening statistics
+- AUTOMATIC FRAME DELAY: Added "ms" to logging and "(ms)" to label just like in Audio Latency
+- GENERAL: Don't bake in OpenAL and libcaca by default unless explicitly enabled with configure switch.
+- GENERAL: Reduce amount of strlen calls
+- GENERAL: Reduce or simply sin/cosf calls
+- GFX: Fix readability and precision issues in aspectratio_lut
+- GFX: Add option to manually enable/disable automatic refresh rate switching
+- GFX: Enable automatic configuration of 'VSync Swap Interval'
+- GFX/FONT/FREETYPE: Use FT_New_Memory_Face - first read it from file to memory beforehand -
+this solves an asset extraction issue when selecting 'Update Assets' - apparently FT_New_Face keeps an open file handle to the font file which
+prevents it from being overwritten/deleted while the program is still running.
+- GFX/THUMBNAILS: Thumbnail aspect ratio fix
+- GFX/THREADED VIDEO: Optimizations, fixes and cleanups
+- GFX/VIDEO FILTERS: Add Upscale_240x160-320x240 video filter with 'mixed' method
+- GLSLANG: Fix compilation with ./configure --disable-builtinglslang - was missing linking against -lMachineIndependent and -lGenericCodeGen static libs
+- INPUT: Fix off by one error for input_block_timeout setting. Also default to 0 for this setting (pretty massive performance gain)
+- INPUT: Analog button mapping fixes
+- INPUT/HID/OSX: Fix DualShock3 support
+- INPUT/HID/LINUX: (qb) Disable HAVE_HID by default for now for Linux as long as there are no working backends for both
+- INPUT/HID/WINDOWS: (qb) Disable HAVE_HID by default for now for Windows as long as there are no working backends for both
+- INPUT/HID/WIIU: Fix DualShock3 support
+- INPUT/OVERLAY: Block pointer input when overlay is pressed
+- INPUT/REMAPPING: input_remapping_save_file - existing remapping file was needlessly reloaded
+- INPUT/REMAPPING: Add option to disable automatic saving of input remap files
+- INPUT/LINUX/UDEV: Fix lightgun scaling on Y axis
+- INPUT/LINUX/X11/LED: Add LED keyboard driver
+- INPUT/WINDOWS/LED: LED keyboard driver cleanup
+- INPUT/WINDOWS/WINRAW: Clear key states when unfocused
+- INPUT/WINDOWS/WINRAW: Fix pointer device position
+- IOS: iOS app icon fixes & revisions
+- LIBRETRO/SAVESTATES: Implement an api call for context awareness
+- LOCALIZATION: Updates
+- LOCALIZATION: Add Catalan language option
+- LOCALIZATION: Fix some bad localization
+- LINUX: Make memfd_create call more backwards compatible by calling it through syscall - on older systems, you'll have to include linux/memfd.h for the MFD_ defines, and call memfd_create() via the the syscall(2) wrapper (and include unistd.h and sys/syscall.h for it work). We exclude linux/memfd.h header include because we already provide the MFD_ defines in case they are missing
+- LINUX/MALI FBDEV: Fix assertion failed on video threaded switch
+- MENU: Menu paging navigation adjustments
+- MENU: New Menu Items for disabling Info & Search buttons in the menu
+- MENU: Allow the user to use volume up/down/mute hotkeys from within the menu
+- MENU: Add missing sublabels for non-running Quick Menu
+- MENU: Reorganize Quick Menu Information
+- MENU: Savestate thumbnails - Savestate slot reset action
+- MENU: Allow changing savestate slots with left/right on save/load
+- MENU: Add 'Ago' to playlist last played styles
+- MENU: Add proper icons for shader items
+- MENU/MATERIALUI: Add icon for 'Download Thumbnails' 
+- MENU/XMB: Add options for hiding header and horizontal title margin
+- MENU/XMB: Dynamic wallpaper fixes
+- MENU/XMB: Add Daite XMB Icon Theme
+- MENU/XMB/OZONE: Savestate thumbnail aspect ratio
+- MENU/XMB/OZONE: Core option category icon refinements
+- MENU/XMB/OZONE: Fullscreen thumbnail browsing
+- MENU/XMB/OZONE: Add playlist icons under 'Load Content'
+- MENU/XMB/OZONE: Thumbnail improvements
+- MENU/XMB/OZONE: Savestate thumbnail fullscreen + dropdown
+- MENU/XMB/OZONE: Prevent unnecessary thumbnail requests when scrolling through playlists
+- MENU/OZONE: Fix playlist thumbnail mouse hover after returning from Quick Menu
+- MENU/OZONE: Thumbnail visibility corrections
+- MENU/OZONE: Playlist metadata reformat
+- MENU/OZONE: Savestate thumbnail fixes
+- MENU/OZONE: Add savestate thumbnails
+- MENU/OZONE: Header icon spacing adjustment
+- MENU/RGUI: Savestate thumbnails
+- MENU/SETTINGS: Turn Advanced Settings on by default, this entire filtering of settings will need a complete rethink anyways
+- MENU/WIDGETS: Widget color + position adjustments
+- MIYOO: Exclude unused HAVE_HID for Miyoo
+- MIYOO: Enable screenshots
+- MIYOO: Enable rewind
+- NETWORK: Allow MITM server selection on OK callback
+- NETWORK: Replace socket_select calls
+- NETWORK: Implement binary network streams
+- NETWORK: Poll support
+- NETWORK: Check connect errno for successful connection
+- NETWORK: Get rid of the timeout_enable parameter for socket_connect
+- NETWORK: Fix getnameinfo_retro's port value for HAVE_SOCKET_LEGACY platforms
+- NETWORK: Define inet_ntop and inet_pton for older Windows versions
+- NETWORK: Define isinprogress function
+- NETWORK/NATT: Move natt files to "network"
+- NETWORK/NETWORK STREAMS: Add function netstream_eof
+- NETWORK/NETPLAY: Fix game CRC parsing
+- NETWORK/NETPLAY: Disable and hide stateless mode
+- NETWORK/NETPLAY: Change default for input sharing to "no sharing"
+- NETWORK/NETPLAY: Enforce a timeout during connection
+- NETWORK/NETPLAY: Disallow clients from loading states and resetting
+- NETWORK/NETPLAY: Special saves directory for client
+- NETWORK/NETPLAY: Ensure current content is reloaded before joining a host
+- NETWORK/NETPLAY: Fix client info devices index
+- NETWORK/NETPLAY: Fix input for some cores when hosting 
+- NETWORK/NETPLAY: Memory leak fixes
+- NETWORK/NETPLAY: Force a core update when starting netplay
+- NETWORK/NETPLAY: Fix NAT traversal announce for HAVE_SOCKET_LEGACY platforms
+- NETWORK/NETPLAY: Refactor fork arguments
+- NETWORK/NETPLAY: Fix content reload deadlocks on static core platforms
+- NETWORK/NETPLAY: Disallow netplay start when content is not loaded for static core platforms
+- NETWORK/NETPLAY: Show client slowdown information
+- NETWORK/NETPLAY: Improve check frames menu entry
+- NETWORK/NETPLAY: Do not try to receive new data if the data is in the buffer
+- NETWORK/NETPLAY: Copy data on receive, even if the buffer is full
+- NETWORK/NETPLAY: Fix lobby sublabel CRC display on some platforms
+- NETWORK/NETPLAY: Support for customizing chat colors
+- NETWORK/NETPLAY: Small launch compatibility patch adjustments
+- NETWORK/NETPLAY: Support for banning clients
+- NETWORK/NETPLAY: Minor tweaks to the find content task
+- NETWORK/NETPLAY: Support for gathering client info and kicking
+- NETWORK/NETPLAY: Fix possible deadlock
+- NETWORK/NETPLAY: Initialize client's allow_pausing to true
+- NETWORK/NETPLAY: Disable netplay for unsupported cores - with stateless mode being disabled for now, there is no reason not to include this. Refuse to initialize netplay when the current core is not supported (no proper savestates support)
+- NETWORK/NETPLAY/DISCOVERY: Ensure fixed width ints on packet struct
+- NETWORK/NETPLAY/DISCOVERY: Support for IPv4 tunneling (6to4)
+- NETWORK/NETPLAY/DISCOVERY/TASKS: Netplay/LAN Discovery Task refactor -  aims to prevent blocking the main thread while awaiting for the LAN discovery timeout; This is accomplished by moving the whole discovery functionality into its task and using a non-blocking timer to finish the task. Also fixes discovery sockets not being made non-blocking, which could cause the main thread to hang for very long periods of time every pre-frame.
+- NETWORK/NETPLAY/TASKS: Find content task refactor - fixes many issues along the way, including a couple of nasty memory leaks that would leak thousands of bytes each time the task ran. It also expands the original concept by matching currently run content by filename (CRC matching is always performed first though).
+- NETWORK/NETPLAY/TASKS: Find content task refactor - Ensure CRC32 is 8 characters long
+- NETWORK/NETPLAY/LOBBY: Add setting for filtering out rooms with non-installed cores
+- NETWORK/NETPLAY/LOBBY: Hide older (incompatible) rooms
+- NETWORK/NETPLAY/LOBBY: Add a toggleable filter for passworded rooms. In addition, move lobby filters into its own submenu for better organization.
+- NETWORK/NETPLAY/MENU: Chat supported info for the host kick submenu
+- NETWORK/NETPLAY/MENU: Localize relay servers
+- NETWORK/NETPLAY/MENU: Host Ban Submenu
+- NETWORK/NETPLAY/MENU: Add client devices info to the kick sub-menu
+- NETWORK/NETPLAY/MENU: Path: Netplay -> Host -> Kick Client - Allows the host to kick clients. Allows the host to view client information: connected clients (names), status (playing/spectating) and ping.
+- NETWORK/NETPLAY/VITA: Add net_ifinfo support
+- NETWORK/NETPLAY/VITA: Enable partial LAN discovery
+- NETWORK/NETPLAY/VITA: Change default UDP port to 19492
+- NETWORK/NETPLAY/VITA: Do not multiply negative timeout values
+- NETWORK/NETPLAY/VITA: Fix epoll's timeout parameter
+- NETWORK/NETPLAY/VITA: Launch compatibility patch
+- NETWORK/NETPLAY/3DS: Launch compatibility patch
+- NETWORK/NETPLAY/3DS: Adapt POLL for 3DS platform
+- NETWORK/NETPLAY/PS3: Launch compatibility patch
+- NETWORK/NETPLAY/WII: Enable net_ifinfo for some features. In practice, this only allows the netplay's UPnP task to succeed on the Wii.
+- NETWORK/NETPLAY/WIIU: Launch compatibility patch
+- NETWORK/NETPLAY/SWITCH: Launch compatibility patch
+- NETWORK/UPNP: Attempt support for remaining platforms
+- NETWORK/UPNP: Support for IPv4 tunneling
+- ODROID GO2: Increase DEFAULT_MAX_PADS to 8 for ODROIDGO2, since that impacts the RG351[X] consoles. The RG351[X] have a USB host controller and can have an arbitrary number of USB gamepads.
+- ONLINE UPDATER: Online Updater menu reorganizing
+- OSX: Fixed items of system top menu bar on macOS
+- OSX: Revision to macOS app icon set
+- PLAYLISTS: Ensure history list will contain CRC32
+- PLAYLISTS: Fix CRC32 comparison - as state->content_crc has "|crc" suffix.
+- PS4/ORBIS: Orbis/PS4 Support using OrbisDev toolchain
+- PS4/ORBIS: Update xxHash dependecy
+- PS4/ORBIS: Shader cache
+- RETROFW: Exclude unused HAVE_HID for RetroFW
+- RETROFW: Support battery indicator on RetroFW
+- RETROFW: Enable menu toggle button on retrofw devices
+- SHADERS: Shader Preset Loading of Multiple additional #references lines for settings
+- SHADERS: Shader Load Extra Parameter Reference Files - this adds the ability to put additional #reference lines inside shader presets which will load additional settings. The first reference in the preset still needs to point at a chain of presets which ends with a shader chain, and subsequent #reference lines will load presets which only have parameter values adjustment. This allows presets to be made with a modular selection of settings. For example with the Mega Bezel one additional reference could point at a preset which contained settings for Night mode vs Day mode, and another reference could point to a preset which contained settings for how much the screen should be zoomed in.
+- SHADERS/MENU: Increase shader scale max value
+- SCANNER/DC: Fix Redump bin/cue scan for some DC games
+- SCANNER/GC/WII: Add RVZ/WIA scan support for GC/Wii
+- SCANNER/PS1: Improved success rate of Serial scanning on PS1 by adding support for the xx.xxx format
+- SCANNER/PS1: Changed return value of detect_ps1_game function to actuially return a failure when the Serial couldn't be extracted. Scanner will then fallback on   crc check, and usually ends up finding the games in the database.
+- SWITCH: Enable RWAV (WAV audio file) support
+- STRING: Do not assume char is unsigned
+- TASKS: More thread-awareness in task callbacks
+- TASKS: Fix race condition at task_queue_wait
+- TVOS: Revised tvOS icons w/ updated alien.
+- VFS: Fix various VFS / file stream issues
+- VULKAN: Fix more validation errors
+- VULKAN: Attempt to fix validation errors with HDR swapchain. Always use final render pass type equal to swapchain format. Use more direct logic to expose if filter chain emits HDR10 color space or not
+- VULKAN/ANDROID: Honor SUBOPTIMAL on non-Android since you'd want to recreate swapchains then. On Android it can be promoted to SUCCESS.
+SUBOPTIMAL_KHR can happen there when rotation (pre-rotate) is wrong.
+- VULKAN/DEBUG: Automatically mark buffer/images/memory with names
+- VULKAN/DEBUG: Move over to VK_EXT_debug_utils. Debug marker is deprecated years ago.
+- VULKAN/HDR: Fix leak of HDR UBO buffer
+- VULKAN/BFI: Fix BFI (Black Frame Insertion) regression
+- WINDOWS: Fix exclusive fullscreen video refresh rate when vsync swap interval is not equal to one - refresh rate in exclusive fullscreen mode was being incorrectly multiplied by vsync swap interval, breaking swap interval functionality at the gfx driver level
+- WIN32: Do optimization for Windows where we only update the title with SetWindowText when the previous title differs from the current title
+- WIN32: Skip console attach when logging to file
+- WIN32: Remove black margins with borderless non-fullscreen window
+- WIN32/TASKBAR: Release ITaskbarList3 on failed HrInit - pointer wasn't NULL'd, thus set_window_progress would cause weird behavior
+- WII/GX: Fix potential datarace
+- WIIU: Implement sysconf and __clear_cache
+- WIIU: Add OS memory mapping imports
+- UWP: Added launch protocol arg 'forceExit' so a frontend can tell an already-running RetroArch UWP instance to quit.
+- UWP: Enable core downloader/updater
+- UWP: Remove copy permissions as its inefficient as we can just directly assign the new ACL and that works
+- Xbox/UWP: Remove expandedResources
+- Xbox/UWP: UWP OnSuspending crash fix
+- Xbox/UWP: Enable savestate file compression by default for UWP/Xbox - got told there are no more issues with it
+- Xbox/UWP: Add support for 4k to angle on xbox for MSVC2017 build
+
 # 1.10.3
 - ANDROID: Decouple Play Core dependency to bring app into compliance for F-Droid
 - ANDROID: Allow audio playback capture on android

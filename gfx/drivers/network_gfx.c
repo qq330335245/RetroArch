@@ -37,19 +37,29 @@
 
 #include "../../driver.h"
 #include "../../configuration.h"
-#include "../../retroarch.h"
 #include "../../verbosity.h"
 #include "../../frontend/frontend_driver.h"
-#include "../common/network_common.h"
 
 #define xstr(s) str(s)
 #define str(s) #s
 
-enum {
+enum
+{
    NETWORK_VIDEO_PIXELFORMAT_RGBA8888 = 0,
    NETWORK_VIDEO_PIXELFORMAT_BGRA8888,
    NETWORK_VIDEO_PIXELFORMAT_RGB565
 } network_video_pixelformat;
+
+typedef struct network
+{
+   unsigned video_width;
+   unsigned video_height;
+   unsigned screen_width;
+   unsigned screen_height;
+   char address[256];
+   uint16_t port;
+   int fd;
+} network_video_t;
 
 static unsigned char *network_menu_frame = NULL;
 static unsigned network_menu_width       = 0;
@@ -61,7 +71,6 @@ static unsigned network_video_pitch      = 0;
 static unsigned network_video_bits       = 0;
 static unsigned network_menu_bits        = 0;
 static bool network_rgb32                = false;
-static bool network_menu_rgb32           = false;
 static unsigned *network_video_temp_buf  = NULL;
 
 static void gfx_ctx_network_input_driver(
@@ -89,7 +98,7 @@ static void *network_gfx_init(const video_info_t *video,
    settings_t *settings                 = config_get_ptr();
    network_video_t *network             = (network_video_t*)calloc(1, sizeof(*network));
    bool video_font_enable               = settings->bools.video_font_enable;
-   const char *joypad_driver            = settings->arrays.joypad_driver;
+   const char *joypad_driver            = settings->arrays.input_joypad_driver;
 
    *input                               = NULL;
    *input_data                          = NULL;
@@ -105,7 +114,7 @@ static void *network_gfx_init(const video_info_t *video,
    gfx_ctx_network_input_driver(joypad_driver,
          input, input_data);
 
-   if (font_enable)
+   if (video_font_enable)
       font_driver_init_osd(network,
             video,
             false,
@@ -117,22 +126,18 @@ static void *network_gfx_init(const video_info_t *video,
 
    RARCH_LOG("[Network]: Connecting to host %s:%d\n", network->address, network->port);
 try_connect:
-   fd = socket_init((void**)&addr, network->port, network->address, SOCKET_TYPE_STREAM);
+   fd = socket_init((void**)&addr, network->port, network->address, SOCKET_TYPE_STREAM, 0);
 
-   next_addr = addr;
-
-   while (fd >= 0)
+   for (next_addr = addr; fd >= 0; fd = socket_next((void**)&next_addr))
    {
+      if (socket_connect_with_timeout(fd, next_addr, 5000))
       {
-         int ret = socket_connect(fd, (void*)next_addr, true);
-
-         if (ret >= 0) /* && socket_nonblock(fd)) */
+         /* socket_connect_with_timeout makes the socket non-blocking. */
+         if (socket_set_block(fd, true))
             break;
-
-         socket_close(fd);
       }
 
-      fd = socket_next((void**)&next_addr);
+      socket_close(fd);
    }
 
    if (addr)
@@ -140,11 +145,7 @@ try_connect:
 
    network->fd = fd;
 
-#if 0
-   socket_nonblock(network->fd);
-#endif
-
-   if (network->fd > 0)
+   if (network->fd >= 0)
       RARCH_LOG("[Network]: Connected to host.\n");
    else
    {
@@ -156,11 +157,6 @@ try_connect:
    RARCH_LOG("[Network]: Init complete.\n");
 
    return network;
-
-error:
-   if (network)
-      free(network);
-   return NULL;
 }
 
 static bool network_gfx_frame(void *data, const void *frame,
@@ -299,7 +295,7 @@ static bool network_gfx_frame(void *data, const void *frame,
                }
             }
 
-            pixfmt = NETWORK_VIDEO_PIXELFORMAT_BGRA8888;
+            pixfmt        = NETWORK_VIDEO_PIXELFORMAT_BGRA8888;
             frame_to_copy = network_video_temp_buf;
          }
       }
@@ -326,7 +322,7 @@ static bool network_gfx_frame(void *data, const void *frame,
          }
       }
 
-      pixfmt = NETWORK_VIDEO_PIXELFORMAT_BGRA8888;
+      pixfmt        = NETWORK_VIDEO_PIXELFORMAT_BGRA8888;
       frame_to_copy = network_video_temp_buf;
    }
 
@@ -497,9 +493,6 @@ video_driver_t video_network = {
    NULL, /* read_frame_raw */
 #ifdef HAVE_OVERLAY
    NULL, /* overlay_interface */
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
    network_gfx_get_poke_interface,
    NULL /* wrap_type_to_enum */

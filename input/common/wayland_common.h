@@ -41,6 +41,12 @@
 /* Generated from xdg-decoration-unstable-v1.h */
 #include "../../gfx/common/wayland/xdg-decoration-unstable-v1.h"
 
+/* Generated from pointer-constraints-unstable-v1.h */
+#include "../../gfx/common/wayland/pointer-constraints-unstable-v1.h"
+
+/* Generated from relative-pointer-unstable-v1.h */
+#include "../../gfx/common/wayland/relative-pointer-unstable-v1.h"
+
 #define UDEV_KEY_MAX			     0x2ff
 #define UDEV_MAX_KEYS           (UDEV_KEY_MAX + 7) / 8
 
@@ -138,6 +144,8 @@ typedef struct gfx_ctx_wayland_data
    struct xdg_toplevel *xdg_toplevel;
    struct wl_keyboard *wl_keyboard;
    struct wl_pointer  *wl_pointer;
+   struct zwp_relative_pointer_v1 *wl_relative_pointer;
+   struct zwp_locked_pointer_v1 *locked_pointer;
    struct wl_touch *wl_touch;
    struct wl_seat *seat;
    struct wl_shm *shm;
@@ -147,7 +155,7 @@ typedef struct gfx_ctx_wayland_data
 #ifdef HAVE_LIBDECOR_H
    struct libdecor *libdecor_context;
    struct libdecor_frame *libdecor_frame;
-#ifdef HAVE_DYNAMIC
+#ifdef HAVE_DYLIB
    struct dylib_t *libdecor;
 #define RA_WAYLAND_SYM(rc,fn,params) rc (*fn) params;
 #include "../../gfx/common/wayland/libdecor_sym.h"
@@ -157,6 +165,8 @@ typedef struct gfx_ctx_wayland_data
    struct zxdg_toplevel_decoration_v1 *deco;
    struct zwp_idle_inhibit_manager_v1 *idle_inhibit_manager;
    struct zwp_idle_inhibitor_v1 *idle_inhibitor;
+   struct zwp_pointer_constraints_v1 *pointer_constraints;
+   struct zwp_relative_pointer_manager_v1 *relative_pointer_manager;
    output_info_t *current_output;
 #ifdef HAVE_VULKAN
    gfx_ctx_vulkan_data_t vk;
@@ -178,6 +188,8 @@ typedef struct gfx_ctx_wayland_data
    touch_pos_t active_touch_positions[MAX_TOUCHES]; /* int32_t alignment */
    unsigned width;
    unsigned height;
+   unsigned buffer_width;
+   unsigned buffer_height;
    unsigned floating_width;
    unsigned floating_height;
    unsigned last_buffer_scale;
@@ -208,6 +220,10 @@ void flush_wayland_fd(void *data);
 extern const struct wl_keyboard_listener keyboard_listener;
 
 extern const struct wl_pointer_listener pointer_listener;
+
+extern const struct zwp_relative_pointer_v1_listener relative_pointer_listener;
+
+extern const struct zwp_locked_pointer_v1_listener locked_pointer_listener;
 
 extern const struct wl_touch_listener touch_listener;
 

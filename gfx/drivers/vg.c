@@ -24,7 +24,6 @@
 #include <EGL/eglext.h>
 
 #include <retro_inline.h>
-#include <retro_assert.h>
 #include <gfx/math/matrix_3x3.h>
 #include <libretro.h>
 
@@ -387,8 +386,6 @@ static void vg_copy_frame(void *data, const void *frame,
                0,
                &img);
 
-      retro_assert(img != EGL_NO_IMAGE_KHR);
-
       if (new_egl)
       {
          vgDestroyImage(vg->mImage);
@@ -528,9 +525,6 @@ video_driver_t video_vg = {
    NULL,                      /* read_frame_raw */
 #ifdef HAVE_OVERLAY
   NULL,                       /* overlay_interface */
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
   vg_get_poke_interface
 };

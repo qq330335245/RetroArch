@@ -20,7 +20,7 @@
 #include "d3d11_common.h"
 #include "d3dcompiler_common.h"
 
-#if defined(HAVE_DYNAMIC) && !defined(__WINRT__)
+#if defined(HAVE_DYLIB) && !defined(__WINRT__)
 #include <dynamic/dylib.h>
 
 HRESULT WINAPI D3D11CreateDevice(
@@ -188,7 +188,7 @@ d3d11_get_closest_match(D3D11Device device, DXGI_FORMAT desired_format, UINT des
    DXGI_FORMAT default_list[] = {desired_format, DXGI_FORMAT_UNKNOWN};
    DXGI_FORMAT* format = dxgi_get_format_fallback_list(desired_format);
 
-   if(!format)
+   if (!format)
       format = default_list;
 
    while (*format != DXGI_FORMAT_UNKNOWN)
@@ -200,7 +200,6 @@ d3d11_get_closest_match(D3D11Device device, DXGI_FORMAT desired_format, UINT des
          break;
       format++;
    }
-   assert(*format);
    return *format;
 }
 

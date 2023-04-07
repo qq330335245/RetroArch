@@ -39,13 +39,6 @@ int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len)
 {
     settings_t *settings = config_get_ptr();
 
-    if (msg == MENU_ENUM_LABEL_CONNECT_NETPLAY_ROOM)
-    {
-       snprintf(s, len,
-             "TODO/FIXME - Fill in message here."
-             );
-       return 0;
-    }
     if (msg <= MENU_ENUM_LABEL_INPUT_HOTKEY_BIND_END &&
         msg >= MENU_ENUM_LABEL_INPUT_HOTKEY_BIND_BEGIN)
     {
@@ -229,10 +222,6 @@ int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len)
                    "Rebobinar. \n"
                    " \n"
                    "Rebobinar precisa estar habilitado.");
-             break;
-          case RARCH_BSV_RECORD_TOGGLE:
-             snprintf(s, len,
-                   "Alternar entre gravando ou não.");
              break;
           default:
              if (string_is_empty(s))
@@ -1610,7 +1599,7 @@ int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len)
                              " \n"
                              "Salvar todos os dados da memória do jogo (*.srm) \n"
                              "neste diretório. Isso inclui arquivos \n"
-                             "relacionados, como .bsv, .rt, .psrm, etc... \n"
+                             "relacionados, como .rt, .psrm, etc... \n"
                              " \n"
                              "Será substituído por opções definidas \n"
                              "explicitamente na linha de comando.");
@@ -1772,16 +1761,6 @@ int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len)
                              " \n"
                              "Não recomendado, exceto para redes muito \n"
                              "rápidas com máquinas muito lentas. \n");
-            break;
-        case MENU_ENUM_LABEL_NETPLAY_STATELESS_MODE:
-            snprintf(s, len,
-                     "Define se o jogo em rede deve executar em um modo \n"
-                             "que não utilize jogos salvos. \n"
-                             " \n"
-                             "Se definido como verdadeiro, uma rede muito \n"
-                             "rápida é necessária, mas Voltar Atrás não é \n"
-                             "permitido, então não haverá oscilação \n"
-                             "no jogo em rede.");
             break;
         case MENU_ENUM_LABEL_NETPLAY_CHECK_FRAMES:
             snprintf(s, len,
@@ -2227,10 +2206,6 @@ int msg_hash_get_help_pt_br_enum(enum msg_hash_enums msg, char *s, size_t len)
                      "Avanço de quadro quando o conteúdo \n"
                      "estiver pausado.");
             break;
-        case MENU_ENUM_LABEL_BSV_RECORD_TOGGLE:
-            snprintf(s, len,
-                     "Alternar entre gravando ou não.");
-            break;
         case MENU_ENUM_LABEL_L_X_PLUS:
         case MENU_ENUM_LABEL_L_X_MINUS:
         case MENU_ENUM_LABEL_L_Y_PLUS:
@@ -2390,7 +2365,8 @@ static const char *menu_hash_to_str_pt_br_label_enum(enum msg_hash_enums msg)
 }
 #endif
 
-const char *msg_hash_to_str_pt_br(enum msg_hash_enums msg) {
+const char *msg_hash_to_str_pt_br(enum msg_hash_enums msg)
+{
 #ifdef HAVE_MENU
     const char *ret = menu_hash_to_str_pt_br_label_enum(msg);
 
@@ -2398,7 +2374,8 @@ const char *msg_hash_to_str_pt_br(enum msg_hash_enums msg) {
        return ret;
 #endif
 
-    switch (msg) {
+    switch (msg)
+    {
 #include "msg_hash_pt_br.h"
         default:
 #if 0

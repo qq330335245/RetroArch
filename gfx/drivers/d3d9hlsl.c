@@ -238,8 +238,8 @@ static void hlsl_d3d9_renderchain_set_shader_params(
    float video_size[2];
    float texture_size[2];
    float output_size[2];
-   void *fprg                               = pass->ftable;
-   void *vprg                               = pass->vtable;
+   LPD3DXCONSTANTTABLE fprg                 = (LPD3DXCONSTANTTABLE)pass->ftable;
+   LPD3DXCONSTANTTABLE vprg                 = (LPD3DXCONSTANTTABLE)pass->vtable;
 
    video_size[0]                            = video_w;
    video_size[1]                            = video_h;
@@ -293,7 +293,7 @@ static bool hlsl_d3d9_renderchain_create_first_pass(
       const struct LinkInfo *info,
       unsigned _fmt)
 {
-   unsigned i;
+   int i;
    struct shader_pass pass       = { 0 };
    unsigned fmt                  =
         (_fmt == RETRO_PIXEL_FORMAT_RGB565) 
@@ -362,7 +362,7 @@ static void hlsl_d3d9_renderchain_calc_and_set_shader_mvp(
    d3d_matrix_multiply(&proj, &ortho, &rot);
    d3d_matrix_transpose(&matrix, &proj);
 
-   d3d9_hlsl_set_param_matrix(pass->vtable,
+   d3d9_hlsl_set_param_matrix((LPD3DXCONSTANTTABLE)pass->vtable,
          chain->chain.dev, "modelViewProj", (const void*)&matrix);
 }
 
@@ -465,7 +465,7 @@ static void d3d9_hlsl_deinit_progs(hlsl_renderchain_t *chain)
 {
    if (chain->chain.passes->count >= 1)
    {
-      unsigned i;
+      size_t i;
 
       d3d9_vertex_buffer_free(NULL,
             chain->chain.passes->data[0].vertex_decl);
@@ -484,7 +484,7 @@ static void d3d9_hlsl_deinit_progs(hlsl_renderchain_t *chain)
 
 static void d3d9_hlsl_destroy_resources(hlsl_renderchain_t *chain)
 {
-   unsigned i;
+   size_t i;
 
    for (i = 0; i < TEXTURES; i++)
    {
@@ -883,7 +883,7 @@ static bool d3d9_hlsl_init_chain(d3d9_video_t *d3d,
 
    if (
          !hlsl_d3d9_renderchain_init(
-            d3d, d3d->renderchain_data,
+            d3d, (hlsl_renderchain_t*)d3d->renderchain_data,
             d3d->dev, &d3d->final_viewport, &link_info,
             rgb32
             ? RETRO_PIXEL_FORMAT_XRGB8888 
@@ -915,7 +915,7 @@ static bool d3d9_hlsl_init_chain(d3d9_video_t *d3d,
       current_height  = out_height;
 
       if (!hlsl_d3d9_renderchain_add_pass(
-               d3d->renderchain_data, &link_info))
+               (hlsl_renderchain_t*)d3d->renderchain_data, &link_info))
       {
          RARCH_ERR("[D3D9]: Failed to add pass.\n");
          return false;
@@ -1188,7 +1188,7 @@ static bool d3d9_hlsl_init_internal(d3d9_video_t *d3d,
 #endif
    video_context_driver_set(&d3d9_hlsl_fake_context); 
    {
-      const char *shader_preset   = retroarch_get_shader_preset();
+      const char *shader_preset   = video_shader_get_current_shader_preset();
       enum rarch_shader_type type = video_shader_parse_type(shader_preset);
 
       d3d9_hlsl_set_shader(d3d, type, shader_preset);
@@ -1610,9 +1610,6 @@ video_driver_t video_d3d9_hlsl = {
    NULL,                      /* read_frame_raw */
 #ifdef HAVE_OVERLAY
    d3d9_get_overlay_interface,
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-   NULL,
 #endif
    d3d9_hlsl_get_poke_interface,
    NULL, /* wrap_type_to_enum */

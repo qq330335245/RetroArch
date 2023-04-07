@@ -21,7 +21,6 @@
 #include <pspgum.h>
 #include <psprtc.h>
 
-#include <retro_assert.h>
 #include <retro_inline.h>
 #include <retro_math.h>
 
@@ -403,7 +402,7 @@ static void *psp_init(const video_info_t *video,
    psp->vsync               = video->vsync;
    psp->rgb32               = video->rgb32;
 
-   if(psp->rgb32)
+   if (psp->rgb32)
    {
       u32 i;
       uint32_t* LUT_r_local = (uint32_t*)(SCEGU_VRAM_BP32_2);
@@ -621,7 +620,7 @@ static bool psp_frame(void *data, const void *frame,
    menu_driver_frame(menu_is_alive, video_info);
 #endif
 
-   if(psp->menu.active)
+   if (psp->menu.active)
    {
       sceGuSendList(GU_TAIL, psp->menu.dList, &(psp->menu.context_storage));
       sceGuSync(0, 0);
@@ -647,7 +646,7 @@ static void psp_free(void *data)
 {
    psp1_video_t *psp = (psp1_video_t*)data;
 
-   if(!(psp) || !(psp->main_dList))
+   if (!(psp) || !(psp->main_dList))
       return;
 
    sceDisplayWaitVblankStart();
@@ -677,14 +676,6 @@ static void psp_set_texture_frame(void *data, const void *frame, bool rgb32,
                                unsigned width, unsigned height, float alpha)
 {
    psp1_video_t *psp = (psp1_video_t*)data;
-
-   (void) rgb32;
-   (void) alpha;
-
-#ifdef DEBUG
-   /* psp->menu.frame buffer size is (480 * 272)*2 Bytes */
-   retro_assert((width*height) < (480 * 272));
-#endif
 
    psp_set_screen_coords(psp->menu.frame_coords, 0, 0,
          SCEGU_SCR_WIDTH, SCEGU_SCR_HEIGHT, 0);
@@ -916,9 +907,6 @@ video_driver_t video_psp1 = {
    NULL, /* read_frame_raw */
 #ifdef HAVE_OVERLAY
    NULL,
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
    psp_get_poke_interface
 };

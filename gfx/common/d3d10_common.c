@@ -18,7 +18,7 @@
 #include "d3d10_common.h"
 #include "d3dcompiler_common.h"
 
-#if defined(HAVE_DYNAMIC) && !defined(__WINRT__)
+#if defined(HAVE_DYLIB) && !defined(__WINRT__)
 #include <dynamic/dylib.h>
 
 typedef HRESULT(WINAPI* PFN_D3D10_CREATE_DEVICE_AND_SWAP_CHAIN)(
@@ -167,7 +167,7 @@ d3d10_get_closest_match(D3D10Device device,
    DXGI_FORMAT default_list[] = {desired_format, DXGI_FORMAT_UNKNOWN};
    DXGI_FORMAT* format = dxgi_get_format_fallback_list(desired_format);
 
-   if(!format)
+   if (!format)
       format = default_list;
 
    while (*format != DXGI_FORMAT_UNKNOWN)
@@ -179,7 +179,6 @@ d3d10_get_closest_match(D3D10Device device,
          break;
       format++;
    }
-   assert(*format);
    return *format;
 }
 

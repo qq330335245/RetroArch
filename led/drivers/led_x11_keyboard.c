@@ -1,12 +1,12 @@
 #include <stdio.h>
+
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+
 #include "../led_driver.h"
 #include "../led_defines.h"
 
 #include "../../configuration.h"
-#include "../../retroarch.h"
-
-#include <X11/Xlib.h>
-#include <X11/XKBlib.h>
 
 /* Keys when setting in XKeyboardControl.led */
 #define XK_NUMLOCK    2
@@ -18,23 +18,21 @@
 #define XM_CAPSLOCK   1
 #define XM_SCROLLLOCK 4
 
-static void key_translate(int *key)
+static int key_translate(int key)
 {
-   switch (*key)
+   switch (key)
    {
       case 0:
-         *key = XK_NUMLOCK;
-         break;
+         return XK_NUMLOCK;
       case 1:
-         *key = XK_CAPSLOCK;
-         break;
+         return XK_CAPSLOCK;
       case 2:
-         *key = XK_SCROLLLOCK;
-         break;
+         return XK_SCROLLLOCK;
       default:
-         *key = 0;
          break;
    }
+
+   return 0;
 }
 
 typedef struct
@@ -51,33 +49,38 @@ static keyboard_led_t *x11kb_cur = &x11kb_curins;
 
 static int get_led(int led)
 {
-   Display *dpy = XOpenDisplay(0);
    XKeyboardState state;
+   Display *dpy = XOpenDisplay(0);
+
    XGetKeyboardControl(dpy, &state);
    XCloseDisplay(dpy);
 
    switch (led)
    {
       case XK_NUMLOCK:
-         return (state.led_mask & XM_NUMLOCK) ? 1 : 0;
+         if (state.led_mask & XM_NUMLOCK)
+            return 1;
          break;
       case XK_CAPSLOCK:
-         return (state.led_mask & XM_CAPSLOCK) ? 1 : 0;
+         if (state.led_mask & XM_CAPSLOCK)
+            return 1;
          break;
       case XK_SCROLLLOCK:
-         return (state.led_mask & XM_SCROLLLOCK) ? 1 : 0;
+         if (state.led_mask & XM_SCROLLLOCK)
+            return 1;
          break;
       default:
          break;
    }
+
    return 0;
 }
 
 static void set_led(int led, int state)
 {
-   Display *dpy = XOpenDisplay(0);
    XKeyboardControl values;
-   values.led = led;
+   Display *dpy    = XOpenDisplay(0);
+   values.led      = led;
    values.led_mode = state ? LedModeOn : LedModeOff;
    XChangeKeyboardControl(dpy, KBLed | KBLedMode, &values);
    XCloseDisplay(dpy);
@@ -91,8 +94,7 @@ static int keyboard_led(int led, int state)
    if ((led < 0) || (led >= MAX_LEDS))
       return -1;
 
-   key_translate(&key);
-   if (!key)
+   if (!(key = key_translate(key)))
       return -1;
 
    status = get_led(key);
@@ -100,8 +102,8 @@ static int keyboard_led(int led, int state)
    if (state == -1)
       return status;
 
-   if ((state && !status) ||
-       (!state && status))
+   if (   ( state  && !status)
+       || (!state  &&  status))
    {
       set_led(key, state);
       x11kb_cur->state[led] = state;
@@ -119,9 +121,9 @@ static void keyboard_init(void)
 
    for (i = 0; i < MAX_LEDS; i++)
    {
-      x11kb_cur->setup[i] = keyboard_led(i, -1);
-      x11kb_cur->state[i] = -1;
-      x11kb_cur->map[i]   = settings->uints.led_map[i];
+      x11kb_cur->setup[i]  = keyboard_led(i, -1);
+      x11kb_cur->state[i]  = -1;
+      x11kb_cur->map[i]    = settings->uints.led_map[i];
       if (x11kb_cur->map[i] < 0)
          x11kb_cur->map[i] = i;
    }

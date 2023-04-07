@@ -34,7 +34,6 @@
 #include <boolean.h>
 #include <retro_common_api.h>
 #include <retro_environment.h>
-#include "../../driver.h"
 #include "../../retroarch.h"
 
 #ifndef _XBOX
@@ -65,12 +64,22 @@
 
 RETRO_BEGIN_DECLS
 
+enum win32_common_flags
+{
+   WIN32_CMN_FLAG_QUIT            = (1 << 0),
+   WIN32_CMN_FLAG_RESIZED         = (1 << 1),
+   WIN32_CMN_FLAG_TASKBAR_CREATED = (1 << 2),
+   WIN32_CMN_FLAG_RESTORE_DESKTOP = (1 << 3),
+   WIN32_CMN_FLAG_INITED          = (1 << 4),
+   WIN32_CMN_FLAG_SWAP_MOUSE_BTNS = (1 << 5)
+};
+
+extern uint8_t g_win32_flags;
+
 #if !defined(_XBOX)
 extern unsigned g_win32_resize_width;
 extern unsigned g_win32_resize_height;
 extern float g_win32_refresh_rate;
-extern bool g_win32_inited;
-extern bool g_win32_restore_desktop;
 extern ui_window_win32_t main_window;
 
 void win32_monitor_get_info(void);
@@ -80,24 +89,14 @@ void win32_monitor_info(void *data, void *hm_data, unsigned *mon_id);
 int win32_change_display_settings(const char *str, void *devmode_data,
       unsigned flags);
 
-void create_wgl_context(HWND hwnd, bool *quit);
-
-#if defined(HAVE_VULKAN)
-void create_vk_context(HWND hwnd, bool *quit);
-#endif
-
-#if defined(HAVE_GDI)
-void create_gdi_context(HWND hwnd, bool *quit);
-#endif
-
 bool win32_get_video_output(DEVMODE *dm, int mode, size_t len);
 
 #if !defined(__WINRT__)
 bool win32_window_init(WNDCLASSEX *wndclass, bool fullscreen, const char *class_name);
 
 void win32_set_style(MONITORINFOEX *current_mon, HMONITOR *hm_to_use,
-	unsigned *width, unsigned *height, bool fullscreen, bool windowed_full,
-	RECT *rect, RECT *mon_rect, DWORD *style);
+      unsigned *width, unsigned *height, bool fullscreen, bool windowed_full,
+      RECT *rect, RECT *mon_rect, DWORD *style);
 #endif
 void win32_monitor_from_window(void);
 #endif
@@ -115,7 +114,7 @@ bool win32_window_create(void *data, unsigned style,
 bool win32_suppress_screensaver(void *data, bool enable);
 
 bool win32_get_metrics(void *data,
-	enum display_metric_types type, float *value);
+      enum display_metric_types type, float *value);
 
 void win32_show_cursor(void *data, bool state);
 
@@ -151,7 +150,7 @@ void win32_window_reset(void);
 
 void win32_destroy_window(void);
 
-bool win32_taskbar_is_created(void);
+uint8_t win32_get_flags(void);
 
 float win32_get_refresh_rate(void *data);
 
@@ -161,15 +160,6 @@ LRESULT CALLBACK wnd_proc_d3d_dinput(HWND hwnd, UINT message,
 LRESULT CALLBACK wnd_proc_d3d_winraw(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 LRESULT CALLBACK wnd_proc_d3d_common(HWND hwnd, UINT message,
-      WPARAM wparam, LPARAM lparam);
-#endif
-
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGL1) || defined(HAVE_OPENGL_CORE)
-LRESULT CALLBACK wnd_proc_wgl_dinput(HWND hwnd, UINT message,
-      WPARAM wparam, LPARAM lparam);
-LRESULT CALLBACK wnd_proc_wgl_winraw(HWND hwnd, UINT message,
-      WPARAM wparam, LPARAM lparam);
-LRESULT CALLBACK wnd_proc_wgl_common(HWND hwnd, UINT message,
       WPARAM wparam, LPARAM lparam);
 #endif
 

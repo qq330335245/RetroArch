@@ -15,7 +15,6 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <retro_assert.h>
 #include <compat/strl.h>
 #include <string/stdstring.h>
 #include <file/config_file.h>
@@ -105,9 +104,9 @@ static bool CCJSONObjectMemberHandler(void *context,
 {
    CCJSONContext *pCtx = (CCJSONContext *)context;
 
-   if ((pCtx->object_depth == 2) &&
-       (pCtx->array_depth  == 1) &&
-       length)
+   if (   (pCtx->object_depth == 2)
+       && (pCtx->array_depth  == 1)
+       && length)
    {
       pCtx->current_string_val      = NULL;
       pCtx->current_string_list_val = NULL;
@@ -210,9 +209,9 @@ static bool CCJSONObjectMemberHandler(void *context,
             break;
       }
    }
-   else if ((pCtx->object_depth == 3) &&
-            (pCtx->array_depth  == 1) &&
-            length)
+   else if (   (pCtx->object_depth == 3)
+            && (pCtx->array_depth  == 1)
+            && length)
    {
       pCtx->current_string_val      = NULL;
       pCtx->current_entry_uint_val  = NULL;
@@ -225,16 +224,16 @@ static bool CCJSONObjectMemberHandler(void *context,
             pCtx->current_entry_uint_val     = &pCtx->core_info->core_file_id.hash;
       }
    }
-   else if ((pCtx->object_depth == 3) &&
-            (pCtx->array_depth  == 2) &&
-            length)
+   else if (   (pCtx->object_depth == 3)
+            && (pCtx->array_depth  == 2)
+            && length)
    {
-      pCtx->current_string_val      = NULL;
-      pCtx->current_entry_bool_val  = NULL;
+      pCtx->current_string_val               = NULL;
+      pCtx->current_entry_bool_val           = NULL;
 
       if (pCtx->to_firmware && (pCtx->core_info->firmware_count > 0))
       {
-         size_t firmware_idx = pCtx->core_info->firmware_count - 1;
+         size_t firmware_idx                 = pCtx->core_info->firmware_count - 1;
 
          if (string_is_equal(pValue,      "path"))
             pCtx->current_string_val         = &pCtx->core_info->firmware[firmware_idx].path;
@@ -244,11 +243,11 @@ static bool CCJSONObjectMemberHandler(void *context,
             pCtx->current_entry_bool_val     = &pCtx->core_info->firmware[firmware_idx].optional;
       }
    }
-   else if ((pCtx->object_depth == 1) &&
-            (pCtx->array_depth  == 0) &&
-            length)
+   else if (   (pCtx->object_depth == 1)
+            && (pCtx->array_depth  == 0)
+            && length)
    {
-      pCtx->current_string_val      = NULL;
+      pCtx->current_string_val               = NULL;
 
       if (string_is_equal(pValue,         "version"))
          pCtx->current_string_val            = &pCtx->core_info_cache_list->version;
@@ -288,19 +287,19 @@ static bool CCJSONStringHandler(void *context,
 static bool CCJSONNumberHandler(void *context,
       const char *pValue, size_t length)
 {
-   CCJSONContext *pCtx = (CCJSONContext*)context;
+   CCJSONContext *pCtx              = (CCJSONContext*)context;
 
    if (pCtx->current_entry_uint_val)
       *pCtx->current_entry_uint_val = string_to_unsigned(pValue);
 
-   pCtx->current_entry_uint_val = NULL;
+   pCtx->current_entry_uint_val     = NULL;
 
    return true;
 }
 
 static bool CCJSONBoolHandler(void *context, bool value)
 {
-   CCJSONContext *pCtx = (CCJSONContext *)context;
+   CCJSONContext *pCtx              = (CCJSONContext *)context;
 
    if (pCtx->current_entry_bool_val)
       *pCtx->current_entry_bool_val = value;
@@ -316,16 +315,16 @@ static bool CCJSONStartObjectHandler(void *context)
 
    pCtx->object_depth++;
 
-   if ((pCtx->object_depth == 1) && (pCtx->array_depth == 0))
+   if (     (pCtx->object_depth == 1) 
+         && (pCtx->array_depth  == 0))
    {
       if (pCtx->core_info_cache_list)
          return false;
-
-      pCtx->core_info_cache_list = core_info_cache_list_new();
-      if (!pCtx->core_info_cache_list)
+      if (!(pCtx->core_info_cache_list = core_info_cache_list_new()))
          return false;
    }
-   else if ((pCtx->object_depth == 2) && (pCtx->array_depth == 1))
+   else if ((pCtx->object_depth == 2) 
+         && (pCtx->array_depth  == 1))
    {
       if (pCtx->core_info)
       {
@@ -334,8 +333,7 @@ static bool CCJSONStartObjectHandler(void *context)
          pCtx->core_info = NULL;
       }
 
-      pCtx->core_info = (core_info_t*)calloc(1, sizeof(core_info_t));
-      if (!pCtx->core_info)
+      if (!(pCtx->core_info = (core_info_t*)calloc(1, sizeof(core_info_t))))
          return false;
 
       /* Assume all cores have 'full' savestate support
@@ -343,7 +341,8 @@ static bool CCJSONStartObjectHandler(void *context)
       pCtx->core_info->savestate_support_level =
             CORE_INFO_SAVESTATE_DETERMINISTIC;
    }
-   else if ((pCtx->object_depth == 3) && (pCtx->array_depth == 2))
+   else if ((pCtx->object_depth == 3) 
+         && (pCtx->array_depth  == 2))
    {
       if (pCtx->to_firmware)
       {
@@ -382,10 +381,10 @@ static bool CCJSONEndObjectHandler(void *context)
       free(pCtx->core_info);
       pCtx->core_info = NULL;
    }
-   else if ((pCtx->object_depth == 3) && (pCtx->array_depth == 1))
+   else if ((pCtx->object_depth == 3) 
+         && (pCtx->array_depth == 1))
       pCtx->to_core_file_id = false;
 
-   retro_assert(pCtx->object_depth > 0);
    pCtx->object_depth--;
 
    return true;
@@ -405,7 +404,6 @@ static bool CCJSONEndArrayHandler(void *context)
    if ((pCtx->object_depth == 2) && (pCtx->array_depth == 2))
       pCtx->to_firmware = false;
 
-   retro_assert(pCtx->array_depth > 0);
    pCtx->array_depth--;
 
    return true;
@@ -607,8 +605,8 @@ static core_info_t *core_info_cache_find(
    uint32_t hash;
    size_t i;
 
-   if (!list ||
-       string_is_empty(core_file_id))
+   if (  !list
+       || string_is_empty(core_file_id))
       return NULL;
 
    hash = core_info_hash_string(core_file_id);
@@ -620,8 +618,8 @@ static core_info_t *core_info_cache_find(
       if (!info)
          continue;
 
-      if ((info->core_file_id.hash == hash) &&
-          string_is_equal(info->core_file_id.str, core_file_id))
+      if (  (info->core_file_id.hash == hash)
+          && string_is_equal(info->core_file_id.str, core_file_id))
       {
          info->is_installed = true;
          return info;
@@ -652,8 +650,8 @@ static void core_info_cache_add(
       if (!items_tmp)
          return;
 
-      list->capacity = list->capacity << 1;
-      list->items    = items_tmp;
+      list->capacity         = list->capacity << 1;
+      list->items            = items_tmp;
 
       memset(&list->items[prev_capacity], 0,
             (list->capacity - prev_capacity) * sizeof(core_info_t));
@@ -705,13 +703,11 @@ static core_info_cache_list_t *core_info_cache_read(const char *info_dir)
 
    /* Check whether a 'force refresh' file
     * is present */
-   file_path[0] = '\0';
-
    if (string_is_empty(info_dir))
       strlcpy(file_path,
             FILE_PATH_CORE_INFO_CACHE_REFRESH, sizeof(file_path));
    else
-      fill_pathname_join(file_path,
+      fill_pathname_join_special(file_path,
             info_dir, FILE_PATH_CORE_INFO_CACHE_REFRESH,
             sizeof(file_path));
 
@@ -719,12 +715,11 @@ static core_info_cache_list_t *core_info_cache_read(const char *info_dir)
       return core_info_cache_list_new();
 
    /* Open info cache file */
-   file_path[0] = '\0';
-
    if (string_is_empty(info_dir))
       strlcpy(file_path, FILE_PATH_CORE_INFO_CACHE, sizeof(file_path));
    else
-      fill_pathname_join(file_path, info_dir, FILE_PATH_CORE_INFO_CACHE,
+      fill_pathname_join_special(file_path, info_dir,
+            FILE_PATH_CORE_INFO_CACHE,
             sizeof(file_path));
 
 #if defined(HAVE_ZLIB)
@@ -740,8 +735,7 @@ static core_info_cache_list_t *core_info_cache_read(const char *info_dir)
       return core_info_cache_list_new();
 
    /* Parse info cache file */
-   parser = rjson_open_stream(file);
-   if (!parser)
+   if (!(parser = rjson_open_stream(file)))
    {
       RARCH_ERR("[Core Info] Failed to create JSON parser\n");
       goto end;
@@ -797,8 +791,8 @@ static core_info_cache_list_t *core_info_cache_read(const char *info_dir)
 
    /* If info cache file has the wrong version
     * number, discard it */
-   if (string_is_empty(core_info_cache_list->version) ||
-       !string_is_equal(core_info_cache_list->version,
+   if (    string_is_empty(core_info_cache_list->version)
+       || !string_is_equal(core_info_cache_list->version,
             CORE_INFO_CACHE_VERSION))
    {
       RARCH_WARN("[Core Info] Core info cache has invalid version"
@@ -826,8 +820,6 @@ static bool core_info_cache_write(core_info_cache_list_t *list, const char *info
    char file_path[PATH_MAX_LENGTH];
    size_t i, j;
 
-   file_path[0] = '\0';
-
    if (!list)
       return false;
 
@@ -835,7 +827,8 @@ static bool core_info_cache_write(core_info_cache_list_t *list, const char *info
    if (string_is_empty(info_dir))
       strlcpy(file_path, FILE_PATH_CORE_INFO_CACHE, sizeof(file_path));
    else
-      fill_pathname_join(file_path, info_dir, FILE_PATH_CORE_INFO_CACHE,
+      fill_pathname_join_special(file_path, info_dir,
+            FILE_PATH_CORE_INFO_CACHE,
             sizeof(file_path));
 
 #if defined(CORE_INFO_CACHE_COMPRESS)
@@ -854,8 +847,7 @@ static bool core_info_cache_write(core_info_cache_list_t *list, const char *info
    }
 
    /* Write info cache */
-   writer = rjsonwriter_open_stream(file);
-   if (!writer)
+   if (!(writer = rjsonwriter_open_stream(file)))
    {
       RARCH_ERR("[Core Info] Failed to create JSON writer\n");
       goto end;
@@ -868,21 +860,21 @@ static bool core_info_cache_write(core_info_cache_list_t *list, const char *info
    rjsonwriter_set_options(writer, RJSONWRITER_OPTION_SKIP_WHITESPACE);
 #endif
 
-   rjsonwriter_add_start_object(writer);
-   rjsonwriter_add_newline(writer);
+   rjsonwriter_raw(writer, "{", 1);
+   rjsonwriter_raw(writer, "\n", 1);
    rjsonwriter_add_spaces(writer, 2);
    rjsonwriter_add_string(writer, "version");
-   rjsonwriter_add_colon(writer);
-   rjsonwriter_add_space(writer);
+   rjsonwriter_raw(writer, ":", 1);
+   rjsonwriter_raw(writer, " ", 1);
    rjsonwriter_add_string(writer, CORE_INFO_CACHE_VERSION);
-   rjsonwriter_add_comma(writer);
-   rjsonwriter_add_newline(writer);
+   rjsonwriter_raw(writer, ",", 1);
+   rjsonwriter_raw(writer, "\n", 1);
    rjsonwriter_add_spaces(writer, 2);
    rjsonwriter_add_string(writer, "items");
-   rjsonwriter_add_colon(writer);
-   rjsonwriter_add_space(writer);
-   rjsonwriter_add_start_array(writer);
-   rjsonwriter_add_newline(writer);
+   rjsonwriter_raw(writer, ":", 1);
+   rjsonwriter_raw(writer, " ", 1);
+   rjsonwriter_raw(writer, "[", 1);
+   rjsonwriter_raw(writer, "\n", 1);
 
    for (i = 0; i < list->length; i++)
    {
@@ -893,286 +885,302 @@ static bool core_info_cache_write(core_info_cache_list_t *list, const char *info
 
       if (i > 0)
       {
-         rjsonwriter_add_comma(writer);
-         rjsonwriter_add_newline(writer);
+         rjsonwriter_raw(writer, ",", 1);
+         rjsonwriter_raw(writer, "\n", 1);
       }
 
       rjsonwriter_add_spaces(writer, 4);
-      rjsonwriter_add_start_object(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, "{", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "display_name");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->display_name);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "display_version");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->display_version);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "core_name");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->core_name);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "system_manufacturer");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->system_manufacturer);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "systemname");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->systemname);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "system_id");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->system_id);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "supported_extensions");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->supported_extensions);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "authors");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->authors);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "permissions");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->permissions);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "licenses");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->licenses);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "categories");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->categories);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "databases");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->databases);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "notes");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->notes);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "required_hw_api");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->required_hw_api);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "description");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->description);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       if (info->firmware_count > 0)
       {
          rjsonwriter_add_spaces(writer, 6);
          rjsonwriter_add_string(writer, "firmware");
-         rjsonwriter_add_colon(writer);
-         rjsonwriter_add_space(writer);
-         rjsonwriter_add_start_array(writer);
-         rjsonwriter_add_newline(writer);
+         rjsonwriter_raw(writer, ":", 1);
+         rjsonwriter_raw(writer, " ", 1);
+         rjsonwriter_raw(writer, "[", 1);
+         rjsonwriter_raw(writer, "\n", 1);
 
          for (j = 0; j < info->firmware_count; j++)
          {
             rjsonwriter_add_spaces(writer, 8);
-            rjsonwriter_add_start_object(writer);
-            rjsonwriter_add_newline(writer);
+            rjsonwriter_raw(writer, "{", 1);
+            rjsonwriter_raw(writer, "\n", 1);
             rjsonwriter_add_spaces(writer, 10);
             rjsonwriter_add_string(writer, "path");
-            rjsonwriter_add_colon(writer);
-            rjsonwriter_add_space(writer);
+            rjsonwriter_raw(writer, ":", 1);
+            rjsonwriter_raw(writer, " ", 1);
             rjsonwriter_add_string(writer, info->firmware[j].path);
-            rjsonwriter_add_comma(writer);
-            rjsonwriter_add_newline(writer);
+            rjsonwriter_raw(writer, ",", 1);
+            rjsonwriter_raw(writer, "\n", 1);
             rjsonwriter_add_spaces(writer, 10);
             rjsonwriter_add_string(writer, "desc");
-            rjsonwriter_add_colon(writer);
-            rjsonwriter_add_space(writer);
+            rjsonwriter_raw(writer, ":", 1);
+            rjsonwriter_raw(writer, " ", 1);
             rjsonwriter_add_string(writer, info->firmware[j].desc);
-            rjsonwriter_add_comma(writer);
-            rjsonwriter_add_newline(writer);
+            rjsonwriter_raw(writer, ",", 1);
+            rjsonwriter_raw(writer, "\n", 1);
             rjsonwriter_add_spaces(writer, 10);
             rjsonwriter_add_string(writer, "optional");
-            rjsonwriter_add_colon(writer);
-            rjsonwriter_add_space(writer);
-            rjsonwriter_add_bool(writer, info->firmware[j].optional);
-            rjsonwriter_add_newline(writer);
+            rjsonwriter_raw(writer, ":", 1);
+            rjsonwriter_raw(writer, " ", 1);
+            {
+               bool value = info->firmware[j].optional;
+               rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+            }
+            rjsonwriter_raw(writer, "\n", 1);
             rjsonwriter_add_spaces(writer, 8);
-            rjsonwriter_add_end_object(writer);
+            rjsonwriter_raw(writer, "}", 1);
 
             if (j < info->firmware_count - 1)
-               rjsonwriter_add_comma(writer);
+               rjsonwriter_raw(writer, ",", 1);
 
-            rjsonwriter_add_newline(writer);
+            rjsonwriter_raw(writer, "\n", 1);
          }
 
          rjsonwriter_add_spaces(writer, 6);
-         rjsonwriter_add_end_array(writer);
-         rjsonwriter_add_comma(writer);
-         rjsonwriter_add_newline(writer);
+         rjsonwriter_raw(writer, "]", 1);
+         rjsonwriter_raw(writer, ",", 1);
+         rjsonwriter_raw(writer, "\n", 1);
       }
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "core_file_id");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, "\n", 1);
       rjsonwriter_add_spaces(writer, 6);
-      rjsonwriter_add_start_object(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, "{", 1);
+      rjsonwriter_raw(writer, "\n", 1);
       rjsonwriter_add_spaces(writer, 8);
       rjsonwriter_add_string(writer, "str");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
       rjsonwriter_add_string(writer, info->core_file_id.str);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
       rjsonwriter_add_spaces(writer, 8);
       rjsonwriter_add_string(writer, "hash");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_unsigned(writer, info->core_file_id.hash);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      rjsonwriter_rawf(writer, "%u", info->core_file_id.hash);
+      rjsonwriter_raw(writer, "\n", 1);
       rjsonwriter_add_spaces(writer, 6);
-      rjsonwriter_add_end_object(writer);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, "}", 1);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "firmware_count");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_unsigned(writer, info->firmware_count);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      rjsonwriter_rawf(writer, "%u", info->firmware_count);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "savestate_support_level");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_unsigned(writer, info->savestate_support_level);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      rjsonwriter_rawf(writer, "%u", info->savestate_support_level);
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "has_info");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_bool(writer, info->has_info);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      {
+         bool value = info->has_info;
+         rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+      }
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "supports_no_game");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_bool(writer, info->supports_no_game);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      {
+         bool value = info->supports_no_game;
+         rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+      }
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "single_purpose");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_bool(writer, info->single_purpose);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      {
+         bool value = info->single_purpose;
+         rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+      }
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "database_match_archive_member");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_bool(writer, info->database_match_archive_member);
-      rjsonwriter_add_comma(writer);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      {
+         bool value = info->database_match_archive_member;
+         rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+      }
+      rjsonwriter_raw(writer, ",", 1);
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 6);
       rjsonwriter_add_string(writer, "is_experimental");
-      rjsonwriter_add_colon(writer);
-      rjsonwriter_add_space(writer);
-      rjsonwriter_add_bool(writer, info->is_experimental);
-      rjsonwriter_add_newline(writer);
+      rjsonwriter_raw(writer, ":", 1);
+      rjsonwriter_raw(writer, " ", 1);
+      {
+         bool value = info->is_experimental;
+         rjsonwriter_raw(writer, (value ? "true" : "false"), (value ? 4 : 5));
+      }
+      rjsonwriter_raw(writer, "\n", 1);
 
       rjsonwriter_add_spaces(writer, 4);
-      rjsonwriter_add_end_object(writer);
+      rjsonwriter_raw(writer, "}", 1);
    }
 
-   rjsonwriter_add_newline(writer);
+   rjsonwriter_raw(writer, "\n", 1);
    rjsonwriter_add_spaces(writer, 2);
-   rjsonwriter_add_end_array(writer);
-   rjsonwriter_add_newline(writer);
-   rjsonwriter_add_end_object(writer);
-   rjsonwriter_add_newline(writer);
+   rjsonwriter_raw(writer, "]", 1);
+   rjsonwriter_raw(writer, "\n", 1);
+   rjsonwriter_raw(writer, "}", 1);
+   rjsonwriter_raw(writer, "\n", 1);
    rjsonwriter_free(writer);
 
    RARCH_LOG("[Core Info] Wrote to cache file: %s\n", file_path);
    success = true;
 
    /* Remove 'force refresh' file, if required */
-   file_path[0] = '\0';
-
    if (string_is_empty(info_dir))
       strlcpy(file_path,
             FILE_PATH_CORE_INFO_CACHE_REFRESH, sizeof(file_path));
    else
-      fill_pathname_join(file_path,
+      fill_pathname_join_special(file_path,
             info_dir, FILE_PATH_CORE_INFO_CACHE_REFRESH,
             sizeof(file_path));
 
@@ -1217,14 +1225,12 @@ bool core_info_cache_force_refresh(const char *path_info)
 {
    char file_path[PATH_MAX_LENGTH];
 
-   file_path[0] = '\0';
-
    /* Get 'force refresh' file path */
    if (string_is_empty(path_info))
       strlcpy(file_path,
             FILE_PATH_CORE_INFO_CACHE_REFRESH, sizeof(file_path));
    else
-      fill_pathname_join(file_path,
+      fill_pathname_join_special(file_path,
             path_info, FILE_PATH_CORE_INFO_CACHE_REFRESH,
             sizeof(file_path));
 
@@ -1257,16 +1263,6 @@ bool core_info_cache_force_refresh(const char *path_info)
 /***********************/
 /* Core Info Cache END */
 /***********************/
-
-enum compare_op
-{
-   COMPARE_OP_EQUAL = 0,
-   COMPARE_OP_NOT_EQUAL,
-   COMPARE_OP_LESS,
-   COMPARE_OP_LESS_EQUAL,
-   COMPARE_OP_GREATER,
-   COMPARE_OP_GREATER_EQUAL
-};
 
 typedef struct
 {
@@ -1344,22 +1340,23 @@ static void core_info_path_list_free(core_path_list_t *path_list)
 static core_path_list_t *core_info_path_list_new(const char *core_dir,
       const char *core_exts, bool show_hidden_files)
 {
-   core_path_list_t *path_list       = (core_path_list_t*)
-         calloc(1, sizeof(*path_list));
+   size_t i;
+   char exts[32];
+   core_path_list_t *path_list       = NULL;
    struct string_list *core_ext_list = NULL;
    bool dir_list_ok                  = false;
-   char exts[32];
-   size_t i;
 
-   exts[0] = '\0';
+   if (string_is_empty(core_exts))
+      return NULL;
 
-   if (string_is_empty(core_exts) ||
-       !path_list)
-      goto error;
+   if (!(path_list = (core_path_list_t*)calloc(1, sizeof(*path_list))))
+      return NULL;
 
-   core_ext_list = string_split(core_exts, "|");
-   if (!core_ext_list)
-      goto error;
+   if (!(core_ext_list = string_split(core_exts, "|")))
+   {
+      core_info_path_list_free(path_list);
+      return NULL;
+   }
 
    /* Allocate list containers */
    path_list->dir_list               = string_list_new();
@@ -1379,12 +1376,10 @@ static core_path_list_t *core_info_path_list_new(const char *core_dir,
    /* Get list of file extensions to include
     * > core + lock */
    strlcpy(exts, core_exts, sizeof(exts));
-   strlcat(exts, "|" FILE_PATH_LOCK_EXTENSION_NO_DOT,
-         sizeof(exts));
+   strlcat(exts, "|lck",      sizeof(exts));
 #if defined(HAVE_DYNAMIC)
    /* > 'standalone exempt' */
-   strlcat(exts, "|" FILE_PATH_STANDALONE_EXEMPT_EXTENSION_NO_DOT,
-         sizeof(exts));
+   strlcat(exts, "|lsae", sizeof(exts));
 #endif
 
    /* Fetch core directory listing */
@@ -1424,9 +1419,9 @@ static core_path_list_t *core_info_path_list_new(const char *core_dir,
          malloc(path_list->dir_list->size *
                sizeof(*path_list->standalone_exempt_list->list));
 
-   if (!path_list->core_list->list ||
-       !path_list->lock_list->list ||
-       !path_list->standalone_exempt_list->list)
+   if (   !path_list->core_list->list
+       || !path_list->lock_list->list 
+       || !path_list->standalone_exempt_list->list)
       goto error;
 
    /* Parse directory listing */
@@ -1484,17 +1479,20 @@ static bool core_info_path_is_locked(
       core_aux_file_path_list_t *lock_list,
       const char *core_file_name)
 {
-   size_t i;
+   size_t i, len;
    uint32_t hash;
-   char lock_filename[256];
-
-   lock_filename[0] = '\0';
+   char lock_filename[NAME_MAX_LENGTH];
 
    if (lock_list->size < 1)
       return false;
 
-   snprintf(lock_filename, sizeof(lock_filename),
-         "%s" FILE_PATH_LOCK_EXTENSION, core_file_name);
+   len                  = strlcpy(lock_filename, core_file_name,
+         sizeof(lock_filename));
+   lock_filename[len  ] = '.';
+   lock_filename[len+1] = 'l';
+   lock_filename[len+2] = 'c';
+   lock_filename[len+3] = 'k';
+   lock_filename[len+4] = '\0';
 
    hash = core_info_hash_string(lock_filename);
 
@@ -1502,8 +1500,8 @@ static bool core_info_path_is_locked(
    {
       core_aux_file_path_t *lock_file = &lock_list->list[i];
 
-      if ((lock_file->hash == hash) &&
-          string_is_equal(lock_file->filename, lock_filename))
+      if (  (lock_file->hash == hash)
+          && string_is_equal(lock_file->filename, lock_filename))
          return true;
    }
 
@@ -1514,18 +1512,21 @@ static bool core_info_path_is_standalone_exempt(
       core_aux_file_path_list_t *exempt_list,
       const char *core_file_name)
 {
-   size_t i;
+   size_t i, len;
    uint32_t hash;
-   char exempt_filename[256];
-
-   exempt_filename[0] = '\0';
+   char exempt_filename[NAME_MAX_LENGTH];
 
    if (exempt_list->size < 1)
       return false;
 
-   snprintf(exempt_filename, sizeof(exempt_filename),
-         "%s" FILE_PATH_STANDALONE_EXEMPT_EXTENSION,
-         core_file_name);
+   len                    = strlcpy(exempt_filename, core_file_name,
+         sizeof(exempt_filename));
+   exempt_filename[len  ] = '.';
+   exempt_filename[len+1] = 'l';
+   exempt_filename[len+2] = 's';
+   exempt_filename[len+3] = 'a';
+   exempt_filename[len+4] = 'e';
+   exempt_filename[len+5] = '\0';
 
    hash = core_info_hash_string(exempt_filename);
 
@@ -1533,8 +1534,8 @@ static bool core_info_path_is_standalone_exempt(
    {
       core_aux_file_path_t *exempt_file = &exempt_list->list[i];
 
-      if ((exempt_file->hash == hash) &&
-          string_is_equal(exempt_file->filename, exempt_filename))
+      if (  (exempt_file->hash == hash)
+          && string_is_equal(exempt_file->filename, exempt_filename))
          return true;
    }
 
@@ -1559,8 +1560,8 @@ static bool core_info_get_file_id(const char *core_filename,
    /* > Remove suffix */
    last_underscore = (char*)strrchr(core_file_id, '_');
 
-   if (!string_is_empty(last_underscore) &&
-       !string_is_equal(last_underscore, "_libretro"))
+   if (   !string_is_empty(last_underscore)
+       && !string_is_equal(last_underscore, "_libretro"))
       *last_underscore = '\0';
 
    return !string_is_empty(core_file_id);
@@ -1570,16 +1571,14 @@ static core_info_t *core_info_find_internal(
       core_info_list_t *list,
       const char *core_path)
 {
-   char core_file_id[256];
-   uint32_t hash;
    size_t i;
+   uint32_t hash;
+   char core_file_id[256];
 
-   core_file_id[0] = '\0';
-
-   if (!list ||
-       string_is_empty(core_path) ||
-       !core_info_get_file_id(path_basename_nocompression(core_path),
-            core_file_id, sizeof(core_file_id)))
+   if (   !list
+       || string_is_empty(core_path)
+       || !core_info_get_file_id(path_basename_nocompression(core_path),
+           core_file_id, sizeof(core_file_id)))
       return NULL;
 
    hash = core_info_hash_string(core_file_id);
@@ -1588,8 +1587,8 @@ static core_info_t *core_info_find_internal(
    {
       core_info_t *info = &list->list[i];
 
-      if ((info->core_file_id.hash == hash) &&
-          string_is_equal(info->core_file_id.str, core_file_id))
+      if (  (info->core_file_id.hash == hash)
+          && string_is_equal(info->core_file_id.str, core_file_id))
          return info;
    }
 
@@ -1614,19 +1613,22 @@ static void core_info_resolve_firmware(
 
    for (i = 0; i < firmware_count; i++)
    {
+      char prefix[12];
       char path_key[64];
       char desc_key[64];
       char opt_key[64];
       struct config_entry_list *entry = NULL;
       bool tmp_bool                   = false;
 
-      path_key[0] = '\0';
-      desc_key[0] = '\0';
-      opt_key[0]  = '\0';
+      prefix[0]   = '\0';
 
-      snprintf(path_key, sizeof(path_key), "firmware%u_path", i);
-      snprintf(desc_key, sizeof(desc_key), "firmware%u_desc", i);
-      snprintf(opt_key,  sizeof(opt_key),  "firmware%u_opt",  i);
+      snprintf(prefix,   sizeof(prefix),   "firmware%u_", i);
+      strlcpy(path_key,  prefix,           sizeof(path_key));
+      strlcat(path_key,  "path",           sizeof(path_key));
+      strlcpy(desc_key,  prefix,           sizeof(desc_key));
+      strlcat(desc_key,  "desc",           sizeof(desc_key));
+      strlcpy(opt_key,   prefix,           sizeof(opt_key));
+      strlcat(opt_key,   "opt",            sizeof(opt_key));
 
       entry = config_get_entry(conf, path_key);
 
@@ -1653,33 +1655,24 @@ static void core_info_resolve_firmware(
 }
 
 static config_file_t *core_info_get_config_file(
-      const char *core_file_id,
-      const char *info_dir)
+      const char *core_file_id, const char *info_dir)
 {
-   char info_path[PATH_MAX_LENGTH];
-
-   if (string_is_empty(info_dir))
-      snprintf(info_path, sizeof(info_path),
-            "%s" ".info", core_file_id);
-   else
+   if (!string_is_empty(info_dir))
    {
-      info_path[0] = '\0';
-      fill_pathname_join(info_path, info_dir, core_file_id,
-            sizeof(info_path));
-      strlcat(info_path, ".info", sizeof(info_path));
+      char info_path[PATH_MAX_LENGTH];
+      fill_pathname_join_special(info_path, info_dir,
+            core_file_id, sizeof(info_path));
+      return config_file_new_from_path_to_string(info_path);
    }
-
-   return config_file_new_from_path_to_string(info_path);
+   return config_file_new_from_path_to_string(core_file_id);
 }
 
 static void core_info_parse_config_file(
       core_info_list_t *list, core_info_t *info,
       config_file_t *conf)
 {
-   struct config_entry_list *entry = NULL;
    bool tmp_bool                   = false;
-
-   entry = config_get_entry(conf, "display_name");
+   struct config_entry_list *entry = config_get_entry(conf, "display_name");
 
    if (entry && !string_is_empty(entry->value))
    {
@@ -1893,11 +1886,8 @@ static void core_info_list_resolve_all_extensions(
             (strlen(core_info_list->list[i].supported_extensions) + 2);
    }
 
-   all_ext_len += STRLEN_CONST("7z|") + STRLEN_CONST("zip|");
-
-   all_ext      = (char*)calloc(1, all_ext_len);
-
-   if (!all_ext)
+   all_ext_len       += STRLEN_CONST("7z|") + STRLEN_CONST("zip|");
+   if (!(all_ext      = (char*)calloc(1, all_ext_len)))
       return;
 
    core_info_list->all_ext = all_ext;
@@ -1997,8 +1987,7 @@ static core_info_list_t *core_info_list_new(const char *path,
    if (!path_list)
       goto error;
 
-   core_info_list = (core_info_list_t*)malloc(sizeof(*core_info_list));
-   if (!core_info_list)
+   if (!(core_info_list = (core_info_list_t*)malloc(sizeof(*core_info_list))))
       goto error;
 
    core_info_list->list       = NULL;
@@ -2006,10 +1995,8 @@ static core_info_list_t *core_info_list_new(const char *path,
    core_info_list->info_count = 0;
    core_info_list->all_ext    = NULL;
 
-   core_info = (core_info_t*)calloc(path_list->core_list->size,
-         sizeof(*core_info));
-
-   if (!core_info)
+   if (!(core_info = (core_info_t*)calloc(path_list->core_list->size,
+         sizeof(*core_info))))
    {
       core_info_list_free(core_info_list);
       goto error;
@@ -2036,8 +2023,6 @@ static core_info_list_t *core_info_list_new(const char *path,
       const char *core_filename   = core_file->filename;
       config_file_t *conf         = NULL;
       char core_file_id[256];
-
-      core_file_id[0] = '\0';
 
       if (!core_info_get_file_id(core_filename, core_file_id,
                sizeof(core_file_id)))
@@ -2087,7 +2072,7 @@ static core_info_list_t *core_info_list_new(const char *path,
       }
 
       /* Cache core path */
-      info->path = strdup(base_path);
+      info->path              = strdup(base_path);
 
       /* Get core lock status */
       info->is_locked         = core_info_path_is_locked(
@@ -2097,10 +2082,10 @@ static core_info_list_t *core_info_list_new(const char *path,
       info->core_file_id.str  = strdup(core_file_id);
       info->core_file_id.hash = core_info_hash_string(core_file_id);
 
-      /* Parse core info file */
-      conf = core_info_get_config_file(core_file_id, info_dir);
+      strlcat(core_file_id, ".info", sizeof(core_file_id));
 
-      if (conf)
+      /* Parse core info file */
+      if ((conf = core_info_get_config_file(core_file_id, info_dir)))
       {
          core_info_parse_config_file(core_info_list, info, conf);
          config_file_free(conf);
@@ -2164,18 +2149,18 @@ error:
 bool core_info_list_get_info(core_info_list_t *core_info_list,
       core_info_t *out_info, const char *core_path)
 {
-   core_info_t *info = core_info_find_internal(
-         core_info_list, core_path);
-
-   if (!out_info)
-      return false;
-
-   memset(out_info, 0, sizeof(*out_info));
-
-   if (info)
+   if (out_info)
    {
-      *out_info = *info;
-      return true;
+      core_info_t *info = core_info_find_internal(
+            core_info_list, core_path);
+
+      memset(out_info, 0, sizeof(*out_info));
+
+      if (info)
+      {
+         *out_info = *info;
+         return true;
+      }
    }
 
    return false;
@@ -2245,13 +2230,9 @@ static bool core_info_list_update_missing_firmware_internal(
    if (!core_info_list)
       return false;
 
-   info                   = core_info_find_internal(
-         core_info_list, core_path);
-
-   if (!info)
+   if (!(info = core_info_find_internal(
+         core_info_list, core_path)))
       return false;
-
-   path[0]                = '\0';
 
    for (i = 0; i < info->firmware_count; i++)
    {
@@ -2374,21 +2355,21 @@ bool core_info_get_list(core_info_list_t **core)
 size_t core_info_count(void)
 {
    core_info_state_t *p_coreinfo          = &core_info_st;
-   if (!p_coreinfo || !p_coreinfo->curr_list)
-      return 0;
-   return p_coreinfo->curr_list->count;
+   if (p_coreinfo && p_coreinfo->curr_list)
+      return p_coreinfo->curr_list->count;
+   return 0;
 }
 
 bool core_info_list_update_missing_firmware(
       core_info_ctx_firmware_t *info, bool *set_missing_bios)
 {
    core_info_state_t *p_coreinfo          = &core_info_st;
-   if (!info)
-      return false;
-   return core_info_list_update_missing_firmware_internal(
-         p_coreinfo->curr_list,
-         info->path, info->directory.system,
-         set_missing_bios);
+   if (info)
+      return core_info_list_update_missing_firmware_internal(
+            p_coreinfo->curr_list,
+            info->path, info->directory.system,
+            set_missing_bios);
+   return false;
 }
 
 bool core_info_load(const char *core_path)
@@ -2420,9 +2401,7 @@ bool core_info_find(const char *core_path,
    if (!core_info || !p_coreinfo->curr_list)
       return false;
 
-   info = core_info_find_internal(p_coreinfo->curr_list, core_path);
-
-   if (!info)
+   if (!(info = core_info_find_internal(p_coreinfo->curr_list, core_path)))
       return false;
 
    *core_info = info;
@@ -2459,8 +2438,8 @@ void core_info_list_get_supported_cores(core_info_list_t *core_info_list,
 
 #ifdef HAVE_COMPRESSION
    if (path_is_compressed_file(path))
-      list = file_archive_get_file_list(path, NULL);
-   p_coreinfo->tmp_list = list;
+      list                       = file_archive_get_file_list(path, NULL);
+   p_coreinfo->tmp_list          = list;
 #endif
 
    /* Let supported core come first in list so we can return
@@ -2505,9 +2484,6 @@ bool core_info_core_file_id_is_equal(const char *core_path_a,
 {
    char core_file_id_a[256];
    char core_file_id_b[256];
-
-   core_file_id_a[0] = '\0';
-   core_file_id_b[0] = '\0';
 
    if (   string_is_empty(core_path_a)
        || string_is_empty(core_path_b)
@@ -2613,9 +2589,9 @@ bool core_info_list_get_display_name(
    info = core_info_find_internal(
          core_info_list, core_path);
 
-   if (s &&
-       info &&
-       !string_is_empty(info->display_name))
+   if (   s 
+       && info
+       && !string_is_empty(info->display_name))
    {
       strlcpy(s, info->display_name, len);
       return true;
@@ -2642,15 +2618,11 @@ core_updater_info_t *core_info_get_core_updater_info(
       return NULL;
 
    /* Read config file */
-   conf = config_file_new_from_path_to_string(info_path);
-
-   if (!conf)
+   if (!(conf = config_file_new_from_path_to_string(info_path)))
       return NULL;
 
    /* Create info struct */
-   info = (core_updater_info_t*)malloc(sizeof(*info));
-
-   if (!info)
+   if (!(info = (core_updater_info_t*)malloc(sizeof(*info))))
       return NULL;
 
    info->is_experimental     = false;
@@ -2718,49 +2690,42 @@ void core_info_free_core_updater_info(core_updater_info_t *info)
 static int core_info_qsort_func_path(const core_info_t *a,
       const core_info_t *b)
 {
-   if (!a || !b)
+   if (!a || !b || string_is_empty(a->path) || string_is_empty(b->path))
       return 0;
-
-   if (string_is_empty(a->path) || string_is_empty(b->path))
-      return 0;
-
    return strcasecmp(a->path, b->path);
 }
 
 static int core_info_qsort_func_display_name(const core_info_t *a,
       const core_info_t *b)
 {
-   if (!a || !b)
-      return 0;
-
-   if (     string_is_empty(a->display_name) 
+   if (     !a
+         || !b
+         || string_is_empty(a->display_name) 
          || string_is_empty(b->display_name))
       return 0;
-
    return strcasecmp(a->display_name, b->display_name);
 }
 
 static int core_info_qsort_func_core_name(const core_info_t *a,
       const core_info_t *b)
 {
-   if (!a || !b)
+   if (     !a
+         || !b
+         || string_is_empty(a->core_name) 
+         || string_is_empty(b->core_name))
       return 0;
-
-   if (string_is_empty(a->core_name) || string_is_empty(b->core_name))
-      return 0;
-
    return strcasecmp(a->core_name, b->core_name);
 }
 
 static int core_info_qsort_func_system_name(const core_info_t *a,
       const core_info_t *b)
 {
-   if (!a || !b)
+   if (
+            !a
+         || !b
+         || string_is_empty(a->systemname) 
+         || string_is_empty(b->systemname))
       return 0;
-
-   if (string_is_empty(a->systemname) || string_is_empty(b->systemname))
-      return 0;
-
    return strcasecmp(a->systemname, b->systemname);
 }
 
@@ -2804,322 +2769,17 @@ void core_info_qsort(core_info_list_t *core_info_list,
                core_info_qsort_func_system_name);
          break;
       default:
-         return;
-   }
-}
-
-static bool core_info_compare_api_version(
-      int sys_major, int sys_minor,
-      int major, int minor, enum compare_op op)
-{
-   switch (op)
-   {
-      case COMPARE_OP_EQUAL:
-         if (sys_major == major && sys_minor == minor)
-            return true;
-         break;
-      case COMPARE_OP_NOT_EQUAL:
-         if (!(sys_major == major && sys_minor == minor))
-            return true;
-         break;
-      case COMPARE_OP_LESS:
-         if (      sys_major < major 
-               || (sys_major == major && sys_minor < minor))
-            return true;
-         break;
-      case COMPARE_OP_LESS_EQUAL:
-         if (      sys_major < major 
-               || (sys_major == major && sys_minor <= minor))
-            return true;
-         break;
-      case COMPARE_OP_GREATER:
-         if (      sys_major > major 
-               || (sys_major == major && sys_minor > minor))
-            return true;
-         break;
-      case COMPARE_OP_GREATER_EQUAL:
-         if (      sys_major > major 
-               || (sys_major == major && sys_minor >= minor))
-            return true;
-         break;
-      default:
          break;
    }
-
-   return false;
-}
-
-bool core_info_hw_api_supported(core_info_t *info)
-{
-#ifdef RARCH_INTERNAL
-   unsigned i;
-   enum gfx_ctx_api sys_api;
-   int sys_api_version_major       = 0;
-   int sys_api_version_minor       = 0;
-   const char *sys_api_version_str = video_driver_get_gpu_api_version_string();
-   gfx_ctx_flags_t sys_flags       = video_driver_get_flags_wrapper();
-
-   enum api_parse_state
-   {
-      STATE_API_NAME,
-      STATE_API_COMPARE_OP,
-      STATE_API_VERSION
-   };
-
-   if (     !info 
-         || !info->required_hw_api_list 
-         || info->required_hw_api_list->size == 0)
-      return true;
-
-   sys_api = video_context_driver_get_api();
-
-   for (i = 0; i < info->required_hw_api_list->size; i++)
-   {
-      char api_str[32]           = {0};
-      char version[16]           = {0};
-      char major_str[16]         = {0};
-      char minor_str[16]         = {0};
-      const char *cur_api        = info->required_hw_api_list->elems[i].data;
-      int api_pos                = 0;
-      int major_str_pos          = 0;
-      int minor_str_pos          = 0;
-      int major                  = 0;
-      int minor                  = 0;
-      unsigned cur_api_len       = 0;
-      unsigned j                 = 0;
-      bool found_major           = false;
-      bool found_minor           = false;
-      enum compare_op op         = COMPARE_OP_GREATER_EQUAL;
-      enum api_parse_state state = STATE_API_NAME;
-
-      if (string_is_empty(cur_api))
-         continue;
-
-      cur_api_len                = (int)strlen(cur_api);
-
-      for (j = 0; j < cur_api_len; j++)
-      {
-         if (cur_api[j] == ' ')
-            continue;
-
-         switch (state)
-         {
-            case STATE_API_NAME:
-            {
-               if (  ISUPPER((unsigned char)cur_api[j]) || 
-                     ISLOWER((unsigned char)cur_api[j]))
-                  api_str[api_pos++] = cur_api[j];
-               else
-               {
-                  j--;
-                  state = STATE_API_COMPARE_OP;
-                  break;
-               }
-
-               break;
-            }
-            case STATE_API_COMPARE_OP:
-            {
-               if (        j < cur_api_len - 1 
-                        && !( cur_api[j] >= '0' 
-                        && cur_api[j] <= '9'))
-               {
-                  if (     cur_api[j]     == '=' 
-                        && cur_api[j + 1] == '=')
-                  {
-                     op = COMPARE_OP_EQUAL;
-                     j++;
-                  }
-                  else if (cur_api[j] == '=')
-                     op = COMPARE_OP_EQUAL;
-                  else if (cur_api[j]     == '!' 
-                        && cur_api[j + 1] == '=')
-                  {
-                     op = COMPARE_OP_NOT_EQUAL;
-                     j++;
-                  }
-                  else if (cur_api[j]     == '<' 
-                        && cur_api[j + 1] == '=')
-                  {
-                     op = COMPARE_OP_LESS_EQUAL;
-                     j++;
-                  }
-                  else if (cur_api[j]     == '>' 
-                        && cur_api[j + 1] == '=')
-                  {
-                     op = COMPARE_OP_GREATER_EQUAL;
-                     j++;
-                  }
-                  else if (cur_api[j] == '<')
-                     op = COMPARE_OP_LESS;
-                  else if (cur_api[j] == '>')
-                     op = COMPARE_OP_GREATER;
-               }
-
-               state = STATE_API_VERSION;
-
-               break;
-            }
-            case STATE_API_VERSION:
-            {
-               if (    !found_minor 
-                     && cur_api[j] >= '0'
-                     && cur_api[j] <= '9'
-                     && cur_api[j] != '.')
-               {
-                  found_major = true;
-
-                  if (major_str_pos < sizeof(major_str) - 1)
-                     major_str[major_str_pos++] = cur_api[j];
-               }
-               else if (
-                        found_major 
-                     && found_minor
-                     && cur_api[j] >= '0'
-                     && cur_api[j] <= '9')
-               {
-                  if (minor_str_pos < sizeof(minor_str) - 1)
-                     minor_str[minor_str_pos++] = cur_api[j];
-               }
-               else if (cur_api[j] == '.')
-                  found_minor = true;
-               break;
-            }
-            default:
-               break;
-         }
-      }
-
-      sscanf(major_str, "%d", &major);
-      sscanf(minor_str, "%d", &minor);
-      snprintf(version, sizeof(version), "%d.%d", major, minor);
-#if 0
-      printf("Major: %d\n", major);
-      printf("Minor: %d\n", minor);
-      printf("API: %s\n", api_str);
-      printf("Version: %s\n", version);
-      fflush(stdout);
-#endif
-
-      if (  (string_is_equal_noncase(api_str, "opengl") 
-             && sys_api == GFX_CTX_OPENGL_API) ||
-            (string_is_equal_noncase(api_str, "openglcompat") 
-             && sys_api == GFX_CTX_OPENGL_API) ||
-            (string_is_equal_noncase(api_str, "openglcompatibility") 
-             && sys_api == GFX_CTX_OPENGL_API)
-         )
-      {
-         /* system is running a core context while compat is requested */
-         if (sys_flags.flags & (1 << GFX_CTX_FLAGS_GL_CORE_CONTEXT))   
-            return false;
-
-         sscanf(sys_api_version_str, "%d.%d",
-               &sys_api_version_major, &sys_api_version_minor);
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "openglcore") 
-            && sys_api == GFX_CTX_OPENGL_API)
-      {
-         sscanf(sys_api_version_str, "%d.%d",
-               &sys_api_version_major, &sys_api_version_minor);
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "opengles") 
-            && sys_api == GFX_CTX_OPENGL_ES_API)
-      {
-         sscanf(sys_api_version_str, "OpenGL ES %d.%d",
-               &sys_api_version_major, &sys_api_version_minor);
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "direct3d8") 
-            && sys_api == GFX_CTX_DIRECT3D8_API)
-      {
-         sys_api_version_major = 8;
-         sys_api_version_minor = 0;
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "direct3d9") 
-            && sys_api == GFX_CTX_DIRECT3D9_API)
-      {
-         sys_api_version_major = 9;
-         sys_api_version_minor = 0;
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "direct3d10") 
-            && sys_api == GFX_CTX_DIRECT3D10_API)
-      {
-         sys_api_version_major = 10;
-         sys_api_version_minor = 0;
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "direct3d11") 
-            && sys_api == GFX_CTX_DIRECT3D11_API)
-      {
-         sys_api_version_major = 11;
-         sys_api_version_minor = 0;
-
-         if (core_info_compare_api_version(sys_api_version_major, sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "direct3d12") 
-            && sys_api == GFX_CTX_DIRECT3D12_API)
-      {
-         sys_api_version_major = 12;
-         sys_api_version_minor = 0;
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "vulkan") 
-            && sys_api == GFX_CTX_VULKAN_API)
-      {
-         sscanf(sys_api_version_str, "%d.%d",
-               &sys_api_version_major, &sys_api_version_minor);
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-      else if (string_is_equal_noncase(api_str, "metal") 
-            && sys_api == GFX_CTX_METAL_API)
-      {
-         sscanf(sys_api_version_str, "%d.%d",
-               &sys_api_version_major, &sys_api_version_minor);
-
-         if (core_info_compare_api_version(sys_api_version_major,
-                  sys_api_version_minor, major, minor, op))
-            return true;
-      }
-   }
-
-   return false;
-#else
-   return true;
-#endif
 }
 
 bool core_info_current_supports_savestate(void)
 {
    core_info_state_t *p_coreinfo = &core_info_st;
+   settings_t        *settings   = config_get_ptr();
+
+   if (settings->bools.core_info_savestate_bypass)
+      return true;
 
    /* If no core is currently loaded, assume
     * by default that all savestate functionality
@@ -3134,6 +2794,10 @@ bool core_info_current_supports_savestate(void)
 bool core_info_current_supports_rewind(void)
 {
    core_info_state_t *p_coreinfo = &core_info_st;
+   settings_t        *settings   = config_get_ptr();
+
+   if (settings->bools.core_info_savestate_bypass)
+      return true;
 
    /* If no core is currently loaded, assume
     * by default that all savestate functionality
@@ -3148,6 +2812,10 @@ bool core_info_current_supports_rewind(void)
 bool core_info_current_supports_netplay(void)
 {
    core_info_state_t *p_coreinfo = &core_info_st;
+   settings_t        *settings   = config_get_ptr();
+
+   if (settings->bools.core_info_savestate_bypass)
+      return true;
 
    /* If no core is currently loaded, assume
     * by default that all savestate functionality
@@ -3162,6 +2830,10 @@ bool core_info_current_supports_netplay(void)
 bool core_info_current_supports_runahead(void)
 {
    core_info_state_t *p_coreinfo = &core_info_st;
+   settings_t        *settings   = config_get_ptr();
+
+   if (settings->bools.core_info_savestate_bypass)
+      return true;
 
    /* If no core is currently loaded, assume
     * by default that all savestate functionality
@@ -3216,10 +2888,9 @@ static bool core_info_update_core_aux_file(const char *path, bool create)
  *   core info list this is *not* thread safe */
 bool core_info_set_core_lock(const char *core_path, bool lock)
 {
+   size_t len;
    core_info_t *core_info = NULL;
    char lock_file_path[PATH_MAX_LENGTH];
-
-   lock_file_path[0] = '\0';
 
 #if defined(ANDROID)
    /* Play Store builds do not support
@@ -3229,14 +2900,20 @@ bool core_info_set_core_lock(const char *core_path, bool lock)
 #endif
 
    /* Search for specified core */
-   if (string_is_empty(core_path) ||
-       !core_info_find(core_path, &core_info) ||
-       string_is_empty(core_info->path))
+   if (
+           string_is_empty(core_path)
+       || !core_info_find(core_path, &core_info)
+       || string_is_empty(core_info->path))
       return false;
 
    /* Get lock file path */
-   snprintf(lock_file_path, sizeof(lock_file_path),
-         "%s" FILE_PATH_LOCK_EXTENSION, core_info->path);
+   len                   = strlcpy(
+         lock_file_path, core_info->path, sizeof(lock_file_path));
+   lock_file_path[len  ] = '.';
+   lock_file_path[len+1] = 'l';
+   lock_file_path[len+2] = 'c';
+   lock_file_path[len+3] = 'k';
+   lock_file_path[len+4] = '\0';
 
    /* Create or delete lock file, as required */
    if (!core_info_update_core_aux_file(lock_file_path, lock))
@@ -3260,12 +2937,11 @@ bool core_info_set_core_lock(const char *core_path, bool lock)
  *   must be checked externally */
 bool core_info_get_core_lock(const char *core_path, bool validate_path)
 {
+   size_t len;
    core_info_t *core_info     = NULL;
    const char *core_file_path = NULL;
    bool is_locked             = false;
    char lock_file_path[PATH_MAX_LENGTH];
-
-   lock_file_path[0] = '\0';
 
 #if defined(ANDROID)
    /* Play Store builds do not support
@@ -3284,16 +2960,22 @@ bool core_info_get_core_lock(const char *core_path, bool validate_path)
          core_file_path = core_info->path;
    }
    else
-      core_file_path = core_path;
+      core_file_path    = core_path;
 
    /* A core cannot be locked if it does not exist... */
-   if (string_is_empty(core_file_path) ||
-       !path_is_valid(core_file_path))
+   if (    string_is_empty(core_file_path)
+       || !path_is_valid(core_file_path))
       return false;
 
    /* Get lock file path */
-   snprintf(lock_file_path, sizeof(lock_file_path),
-         "%s" FILE_PATH_LOCK_EXTENSION, core_file_path);
+   len                   = strlcpy(
+         lock_file_path, core_file_path,
+         sizeof(lock_file_path));
+   lock_file_path[len  ] = '.';
+   lock_file_path[len+1] = 'l';
+   lock_file_path[len+2] = 'c';
+   lock_file_path[len+3] = 'k';
+   lock_file_path[len+4] = '\0';
 
    /* Check whether lock file exists */
    is_locked = path_is_valid(lock_file_path);
@@ -3318,38 +3000,40 @@ bool core_info_get_core_lock(const char *core_path, bool validate_path)
  * > *Not* thread safe */
 bool core_info_set_core_standalone_exempt(const char *core_path, bool exempt)
 {
+   /* Static platforms do not support the contentless
+    * cores menu */
 #if defined(HAVE_DYNAMIC)
+   size_t _len;
    core_info_t *core_info = NULL;
    char exempt_file_path[PATH_MAX_LENGTH];
 
-   exempt_file_path[0] = '\0';
-
    /* Search for specified core */
-   if (string_is_empty(core_path) ||
-       !core_info_find(core_path, &core_info) ||
-       string_is_empty(core_info->path) ||
-       !core_info->supports_no_game)
+   if (    string_is_empty(core_path)
+       || !core_info_find(core_path, &core_info)
+       || string_is_empty(core_info->path)
+       || !core_info->supports_no_game)
       return false;
 
    /* Get 'standalone exempt' file path */
-   snprintf(exempt_file_path, sizeof(exempt_file_path),
-         "%s" FILE_PATH_STANDALONE_EXEMPT_EXTENSION,
-         core_info->path);
+   _len                     = strlcpy(exempt_file_path, core_info->path,
+         sizeof(exempt_file_path));
+   exempt_file_path[_len  ] = '.';
+   exempt_file_path[_len+1] = 'l';
+   exempt_file_path[_len+2] = 's';
+   exempt_file_path[_len+3] = 'a';
+   exempt_file_path[_len+4] = 'e';
+   exempt_file_path[_len+5] = '\0';
 
    /* Create or delete 'standalone exempt' file, as required */
-   if (!core_info_update_core_aux_file(exempt_file_path, exempt))
-      return false;
-
-   /* File operations were successful - update
-    * core info entry */
-   core_info->is_standalone_exempt = exempt;
-
-   return true;
-#else
-   /* Static platforms do not support the contentless
-    * cores menu */
-   return false;
+   if (core_info_update_core_aux_file(exempt_file_path, exempt))
+   {
+      /* File operations were successful - update
+       * core info entry */
+      core_info->is_standalone_exempt = exempt;
+      return true;
+   }
 #endif
+   return false;
 }
 
 /* Fetches 'standalone exempt' status of specified core
@@ -3359,36 +3043,39 @@ bool core_info_set_core_standalone_exempt(const char *core_path, bool exempt)
  * > *Not* thread safe */
 bool core_info_get_core_standalone_exempt(const char *core_path)
 {
+   /* Static platforms do not support the contentless
+    * cores menu */
 #if defined(HAVE_DYNAMIC)
+   size_t _len;
    core_info_t *core_info = NULL;
-   bool is_exempt         = false;
    char exempt_file_path[PATH_MAX_LENGTH];
 
-   exempt_file_path[0] = '\0';
-
    /* Search for specified core */
-   if (string_is_empty(core_path) ||
-       !core_info_find(core_path, &core_info) ||
-       string_is_empty(core_info->path) ||
-       !core_info->supports_no_game)
+   if (    string_is_empty(core_path)
+       || !core_info_find(core_path, &core_info)
+       ||  string_is_empty(core_info->path)
+       || !core_info->supports_no_game)
       return false;
 
    /* Get 'standalone exempt' file path */
-   snprintf(exempt_file_path, sizeof(exempt_file_path),
-         "%s" FILE_PATH_STANDALONE_EXEMPT_EXTENSION,
-         core_info->path);
+   _len                     = strlcpy(
+         exempt_file_path, core_info->path,
+         sizeof(exempt_file_path));
+   exempt_file_path[_len  ] = '.';
+   exempt_file_path[_len+1] = 'l';
+   exempt_file_path[_len+2] = 's';
+   exempt_file_path[_len+3] = 'a';
+   exempt_file_path[_len+4] = 'e';
+   exempt_file_path[_len+5] = '\0';
 
    /* Check whether 'standalone exempt' file exists */
-   is_exempt = path_is_valid(exempt_file_path);
+   if (path_is_valid(exempt_file_path))
+   {
+      core_info->is_standalone_exempt = true;
+      return true;
+   }
 
-   /* Ensure that core info 'is_standalone_exempt'
-    * field is up to date */
-   core_info->is_standalone_exempt = is_exempt;
-
-   return is_exempt;
-#else
-   /* Static platforms do not support the contentless
-    * cores menu */
-   return false;
+   core_info->is_standalone_exempt    = false;
 #endif
+   return false;
 }

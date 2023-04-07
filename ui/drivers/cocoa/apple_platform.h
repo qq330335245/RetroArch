@@ -6,8 +6,18 @@
 #import <MetalKit/MetalKit.h>
 #endif
 
+typedef enum apple_view_type
+{
+   APPLE_VIEW_TYPE_NONE = 0,
+   APPLE_VIEW_TYPE_OPENGL_ES,
+   APPLE_VIEW_TYPE_OPENGL,
+   APPLE_VIEW_TYPE_VULKAN,
+   APPLE_VIEW_TYPE_METAL
+} apple_view_type_t;
+
 #if defined(HAVE_COCOA_METAL) && !defined(HAVE_COCOATOUCH)
 @interface WindowListener : NSResponder<NSWindowDelegate>
+@property (nonatomic) NSWindow* window;
 @end
 #endif
 
@@ -28,19 +38,23 @@
  * the displays should not sleep.
  */
 - (bool)setDisableDisplaySleep:(bool)disable;
+#if defined(HAVE_COCOA_METAL) && !defined(HAVE_COCOATOUCH)
+- (void)updateWindowedMode;
+#endif
 @end
 
 #endif
 
 #if defined(HAVE_COCOA_METAL) || defined(HAVE_COCOATOUCH)
 extern id<ApplePlatform> apple_platform;
-
-id<ApplePlatform> apple_platform;
 #else
-id apple_platform;
+extern id apple_platform;
 #endif
 
 #if defined(HAVE_COCOATOUCH)
+void rarch_start_draw_observer(void);
+void rarch_stop_draw_observer(void);
+
 @interface RetroArch_iOS : UINavigationController<ApplePlatform, UIApplicationDelegate,
 UINavigationControllerDelegate> {
     UIView *_renderView;

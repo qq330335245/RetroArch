@@ -20,7 +20,6 @@
 #include <ctype.h>
 
 #include <compat/strl.h>
-#include <retro_assert.h>
 #include <retro_miscellaneous.h>
 
 #ifdef HAVE_CONFIG_H
@@ -42,8 +41,13 @@
 #include <sys/keycodes.h>
 #endif
 
+#ifdef __PS3__
 #ifdef __PSL1GHT__
 #include <io/kb.h>
+#else
+#include <ps3_defines.h>
+#include <cell/keyboard.h>
+#endif
 #endif
 
 #if defined(HAVE_SDL) || defined(HAVE_SDL2)
@@ -1459,7 +1463,7 @@ const struct rarch_key_map rarch_key_map_qnx[] = {
    { KEYCODE_RIGHT_CTRL, RETROK_RCTRL },
    { KEYCODE_LEFT_ALT, RETROK_LALT },
    { KEYCODE_RIGHT_ALT, RETROK_RALT },
-   // TODO/FIXME: Code for 'sym' key on BB keyboards. Figure out which sys/keycodes.h define this maps to.
+   /* TODO/FIXME: Code for 'sym' key on BB keyboards. Figure out which sys/keycodes.h define this maps to. */
    { 61651, RETROK_RSUPER },
    { KEYCODE_DOLLAR, RETROK_DOLLAR },
    { KEYCODE_MENU, RETROK_MENU },
@@ -1595,7 +1599,7 @@ const struct rarch_key_map rarch_key_map_apple_hid[] = {
    { KEY_RightAlt, RETROK_RALT },
    { KEY_LeftAlt, RETROK_LALT },
    { KEY_RightGUI, RETROK_RMETA },
-   { KEY_LeftGUI, RETROK_RMETA },
+   { KEY_LeftGUI, RETROK_LMETA },
    /* { ?, RETROK_LSUPER }, */
    /* { ?, RETROK_RSUPER }, */
    /* { ?, RETROK_MODE }, */
@@ -1708,8 +1712,8 @@ const struct rarch_key_map rarch_key_map_dos[] = {
 };
 #endif
 
-#ifdef __PSL1GHT__
-const struct rarch_key_map rarch_key_map_psl1ght[] = {
+#if defined(__PS3__)
+const struct rarch_key_map rarch_key_map_ps3[] = {
    { KB_RAWKEY_A, RETROK_a },
    { KB_RAWKEY_B, RETROK_b },
    { KB_RAWKEY_C, RETROK_c },
@@ -2039,7 +2043,6 @@ void input_keymaps_translate_rk_to_str(enum retro_key key, char *buf, size_t siz
 {
    unsigned i;
 
-   retro_assert(size >= 2);
    *buf = '\0';
 
    if (key >= RETROK_a && key <= RETROK_z)

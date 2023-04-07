@@ -153,6 +153,8 @@ fi
 }
 
 add_define MAKEFILE ASSETS_DIR "${ASSETS_DIR:-$SHARE_DIR}/retroarch"
+add_define MAKEFILE FILTERS_DIR "${FILTERS_DIR:-$SHARE_DIR}/retroarch"
+add_define MAKEFILE CORE_INFO_DIR "${CORE_INFO_DIR:-$SHARE_DIR}/retroarch"
 add_define MAKEFILE BIN_DIR "${BIN_DIR:-${PREFIX}/bin}"
 add_define MAKEFILE DOC_DIR "${DOC_DIR:-${SHARE_DIR}/doc/retroarch}"
 add_define MAKEFILE MAN_DIR "${MAN_DIR:-${SHARE_DIR}/man}"
@@ -242,13 +244,10 @@ check_platform Darwin METAL 'Metal is' true
 if [ "$OS" = 'Darwin' ]; then
    check_lib '' COREAUDIO "-framework AudioUnit" AudioUnitInitialize
    check_lib '' CORETEXT "-framework CoreText" CTFontCreateWithName
+   add_opt CRTSWITCHRES no
 
    if [ "$HAVE_METAL" = yes ]; then
       check_lib '' COCOA_METAL "-framework AppKit" NSApplicationMain
-      add_opt OPENGL no
-      add_opt OPENGL1 no
-      add_opt OPENGL_CORE no
-      die : 'Notice: Metal cannot coexist with OpenGL (yet), so disabling OpenGL.'
    else
       check_lib '' COCOA "-framework AppKit" NSApplicationMain
    fi
@@ -630,14 +629,14 @@ if [ "$HAVE_GLSLANG" != no ]; then
    check_lib cxx GLSLANG -lglslang '' '-lSPIRV'
    check_lib cxx GLSLANG_OSDEPENDENT -lOSDependent
    check_lib cxx GLSLANG_OGLCOMPILER -lOGLCompiler
+   check_lib cxx GLSLANG_MACHINEINDEPENDENT -lMachineIndependent
+   check_lib cxx GLSLANG_GENERICCODEGEN -lGenericCodeGen
    check_lib cxx GLSLANG_HLSL -lHLSL '' '-lglslang -lSPIRV'
    check_lib cxx GLSLANG_SPIRV -lSPIRV
    check_lib cxx GLSLANG_SPIRV_TOOLS_OPT -lSPIRV-Tools-opt
    check_lib cxx GLSLANG_SPIRV_TOOLS -lSPIRV-Tools
 
    if [ "$HAVE_GLSLANG" = no ] ||
-      [ "$HAVE_GLSLANG_OSDEPENDENT" = no ] ||
-      [ "$HAVE_GLSLANG_OGLCOMPILER" = no ] ||
       [ "$HAVE_GLSLANG_HLSL" = no ] ||
       [ "$HAVE_GLSLANG_SPIRV" = no ] ||
       [ "$HAVE_GLSLANG_SPIRV_TOOLS_OPT" = no ] ||

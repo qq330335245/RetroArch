@@ -139,8 +139,6 @@ static bool vga_gfx_frame(void *data, const void *frame,
       unsigned pitch, const char *msg, video_frame_info_t *video_info)
 {
    unsigned width, height, bits;
-   size_t len                = 0;
-   void *buffer              = NULL;
    const void *frame_to_copy = frame;
    bool draw                 = true;
    vga_t *vga                = (vga_t*)data;
@@ -416,9 +414,6 @@ video_driver_t video_vga = {
 
 #ifdef HAVE_OVERLAY
   NULL, /* overlay_interface */
-#endif
-#ifdef HAVE_VIDEO_LAYOUT
-  NULL,
 #endif
   vga_gfx_get_poke_interface,
 };

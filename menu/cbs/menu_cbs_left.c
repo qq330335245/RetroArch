@@ -85,12 +85,12 @@ static int shader_action_parameter_left_internal(unsigned type, const char *labe
    param_menu = shader ? &shader->parameters [type - offset] : NULL;
 
    if (!param_prev || !param_menu)
-      return menu_cbs_exit();
+      return -1;
    ret = generic_shader_action_parameter_left(param_prev, type, label, wraparound);
 
    param_menu->current = param_prev->current;
 
-   shader->modified    = true;
+   shader->flags      |= SHDR_FLAG_MODIFIED;
 
    return ret;
 }
@@ -235,7 +235,7 @@ static int action_left_scroll(unsigned type, const char *label,
       return false;
 
    scroll_speed          = (unsigned)((MAX(scroll_accel, 2) - 2) / 4 + 1);
-   fast_scroll_speed     = 4 + 4 * scroll_speed;
+   fast_scroll_speed     = 10 * scroll_speed;
 
    if (selection > fast_scroll_speed)
    {
@@ -248,7 +248,10 @@ static int action_left_scroll(unsigned type, const char *label,
       bool pending_push = false;
       menu_driver_ctl(MENU_NAVIGATION_CTL_CLEAR, &pending_push);
    }
-
+#ifdef HAVE_AUDIOMIXER
+   if (selection != menu_navigation_get_selection()) 
+      audio_driver_mixer_play_scroll_sound(true);
+#endif
    return 0;
 }
 
@@ -304,18 +307,21 @@ static int action_left_shader_scale_pass(unsigned type, const char *label,
    struct video_shader_pass *shader_pass = shader ? &shader->pass[pass] : NULL;
 
    if (!shader_pass)
-      return menu_cbs_exit();
+      return -1;
 
    /* A 20x scale is used to support scaling handheld border shaders up to 8K resolutions */
-   current_scale            = shader_pass->fbo.scale_x;
-   delta                    = 20;
-   current_scale            = (current_scale + delta) % 21;
+   current_scale              = shader_pass->fbo.scale_x;
+   delta                      = 20;
+   current_scale              = (current_scale + delta) % 21;
 
-   shader_pass->fbo.valid   = current_scale;
-   shader_pass->fbo.scale_x = current_scale;
-   shader_pass->fbo.scale_y = current_scale;
+   if (current_scale)
+      shader_pass->fbo.flags |=  FBO_SCALE_FLAG_VALID;
+   else
+      shader_pass->fbo.flags &= ~FBO_SCALE_FLAG_VALID;
+   shader_pass->fbo.scale_x   = current_scale;
+   shader_pass->fbo.scale_y   = current_scale;
 
-   shader->modified         = true;
+   shader->flags           |= SHDR_FLAG_MODIFIED;
 
    return 0;
 }
@@ -329,10 +335,10 @@ static int action_left_shader_filter_pass(unsigned type, const char *label,
    struct video_shader_pass *shader_pass = shader ? &shader->pass[pass] : NULL;
 
    if (!shader_pass)
-      return menu_cbs_exit();
+      return -1;
 
    shader_pass->filter                   = ((shader_pass->filter + delta) % 3);
-   shader->modified                      = true;
+   shader->flags                        |= SHDR_FLAG_MODIFIED;
 
    return 0;
 }
@@ -343,7 +349,7 @@ static int action_left_shader_filter_default(unsigned type, const char *label,
    rarch_setting_t *setting = menu_setting_find_enum(
          MENU_ENUM_LABEL_VIDEO_SMOOTH);
    if (!setting)
-      return menu_cbs_exit();
+      return -1;
    return menu_action_handle_setting(setting,
          setting->type, MENU_ACTION_LEFT, wraparound);
 }
@@ -375,7 +381,7 @@ static int action_left_shader_num_passes(unsigned type, const char *label,
    unsigned pass_count         = shader ? shader->passes : 0;
 
    if (!shader)
-      return menu_cbs_exit();
+      return -1;
 
    if (pass_count > 0)
       shader->passes--;
@@ -384,7 +390,7 @@ static int action_left_shader_num_passes(unsigned type, const char *label,
    menu_driver_ctl(RARCH_MENU_CTL_SET_PREVENT_POPULATE, NULL);
    video_shader_resolve_parameters(shader);
 
-   shader->modified                      = true;
+   shader->flags                        |= SHDR_FLAG_MODIFIED;
 
    return 0;
 }
@@ -416,7 +422,7 @@ static int playlist_association_left(unsigned type, const char *label,
 
    core_info_get_list(&core_info_list);
    if (!core_info_list)
-      return menu_cbs_exit();
+      return -1;
 
    /* Get current core path association */
    if (!string_is_empty(default_core_path) &&
@@ -950,6 +956,35 @@ static int action_left_video_gpu_index(unsigned type, const char *label,
    return 0;
 }
 
+static int action_left_state_slot(unsigned type, const char *label,
+      bool wraparound)
+{
+   settings_t           *settings = config_get_ptr();
+
+   settings->ints.state_slot--;
+   if (settings->ints.state_slot < -1)
+      settings->ints.state_slot = 999;
+
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_PATH, NULL);
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_IMAGE, NULL);
+
+   return 0;
+}
+static int action_left_replay_slot(unsigned type, const char *label,
+      bool wraparound)
+{
+   settings_t           *settings = config_get_ptr();
+
+   settings->ints.replay_slot--;
+   if (settings->ints.replay_slot < -1)
+      settings->ints.replay_slot = 999;
+
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_PATH, NULL);
+   menu_driver_ctl(RARCH_MENU_CTL_UPDATE_SAVESTATE_THUMBNAIL_IMAGE, NULL);
+
+   return 0;
+}
+
 static int bind_left_generic(unsigned type, const char *label,
       bool wraparound)
 {
@@ -1070,18 +1105,6 @@ static int menu_cbs_init_bind_left_compare_label(menu_file_list_cbs_t *cbs,
                   BIND_ACTION_LEFT(cbs, action_left_scroll);
                }
                break;
-            case MENU_ENUM_LABEL_START_VIDEO_PROCESSOR:
-            case MENU_ENUM_LABEL_TAKE_SCREENSHOT:
-               if (
-                        string_ends_with_size(menu_label, "_tab",
-                           strlen(menu_label),
-                           STRLEN_CONST("_tab"))
-                     || string_is_equal(menu_label, msg_hash_to_str(MENU_ENUM_LABEL_HORIZONTAL_MENU))
-                  )
-               {
-                  BIND_ACTION_LEFT(cbs, action_left_mainmenu);
-                  break;
-               }
             case MENU_ENUM_LABEL_VIDEO_GPU_INDEX:
                BIND_ACTION_LEFT(cbs, action_left_video_gpu_index);
                break;
@@ -1198,14 +1221,10 @@ static int menu_cbs_init_bind_left_compare_type(menu_file_list_cbs_t *cbs,
          case FILE_TYPE_RDB:
          case FILE_TYPE_RDB_ENTRY:
          case FILE_TYPE_RPL_ENTRY:
-         case FILE_TYPE_CURSOR:
          case FILE_TYPE_SHADER:
          case FILE_TYPE_SHADER_PRESET:
          case FILE_TYPE_IMAGE:
          case FILE_TYPE_OVERLAY:
-#ifdef HAVE_VIDEO_LAYOUT
-         case FILE_TYPE_VIDEO_LAYOUT:
-#endif
          case FILE_TYPE_VIDEOFILTER:
          case FILE_TYPE_AUDIOFILTER:
          case FILE_TYPE_CONFIG:
@@ -1229,8 +1248,6 @@ static int menu_cbs_init_bind_left_compare_type(menu_file_list_cbs_t *cbs,
          case FILE_TYPE_VIDEO_FONT:
          case MENU_SETTING_GROUP:
          case MENU_SETTINGS_CORE_INFO_NONE:
-         case MENU_SETTING_ACTION_FAVORITES_DIR:
-         case MENU_SETTING_ACTION_CORE_MANAGER_OPTIONS:
             if (  
                   string_ends_with_size(menu_label, "_tab",
                      strlen(menu_label), STRLEN_CONST("_tab"))
@@ -1240,6 +1257,17 @@ static int menu_cbs_init_bind_left_compare_type(menu_file_list_cbs_t *cbs,
                BIND_ACTION_LEFT(cbs, action_left_mainmenu);
                break;
             }
+         case MENU_SETTING_ACTION_RUN:
+         case MENU_SETTING_ACTION_CLOSE:
+         case MENU_SETTING_ACTION_CLOSE_HORIZONTAL:
+         case MENU_SETTING_ACTION_DELETE_ENTRY:
+         case MENU_SETTING_ACTION_CORE_OPTIONS:
+         case MENU_SETTING_ACTION_CORE_DISK_OPTIONS:
+         case MENU_SETTING_ACTION_SCREENSHOT:
+         case MENU_SETTING_ACTION_FAVORITES_DIR:
+         case MENU_SETTING_ACTION_CORE_MANAGER_OPTIONS:
+         case MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION:
+         case MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION_KBD:
             BIND_ACTION_LEFT(cbs, action_left_scroll);
             break;
          case MENU_SETTING_ACTION:
@@ -1252,9 +1280,14 @@ static int menu_cbs_init_bind_left_compare_type(menu_file_list_cbs_t *cbs,
          case MENU_SETTING_ACTION_CORE_SET_STANDALONE_EXEMPT:
             BIND_ACTION_LEFT(cbs, action_left_core_set_standalone_exempt);
             break;
-         case MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION:
-         case MENU_SETTING_DROPDOWN_ITEM_INPUT_DESCRIPTION_KBD:
-            BIND_ACTION_LEFT(cbs, action_left_scroll);
+         case MENU_SETTING_ACTION_SAVESTATE:
+         case MENU_SETTING_ACTION_LOADSTATE:
+            BIND_ACTION_LEFT(cbs, action_left_state_slot);
+            break;
+         case MENU_SETTING_ACTION_RECORDREPLAY:
+         case MENU_SETTING_ACTION_PLAYREPLAY:
+         case MENU_SETTING_ACTION_HALTREPLAY:
+            BIND_ACTION_LEFT(cbs, action_left_replay_slot);
             break;
          default:
             return -1;
