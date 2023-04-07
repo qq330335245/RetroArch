@@ -495,14 +495,15 @@ bool gfx_thumbnail_set_content_playlist(
       strlcpy(path_data->content_core_name,
             core_name, sizeof(path_data->content_core_name));
    
-   /* Get content label */
+      /* Get content label */
    // if (!string_is_empty(content_label))
    //    strlcpy(path_data->content_label,
    //          content_label, sizeof(path_data->content_label));
    // else
-      fill_short_pathname_representation(path_data->content_label,/*缩略图读取由label改为文件名，以便switch端显示中文的同时能显示缩略图*/
-            content_path, sizeof(path_data->content_label));
-   
+      fill_pathname(path_data->content_label,/*缩略图读取由label改为文件名，以便switch端显示中文的同时能显示缩略图*/
+            path_basename_nocompression(content_path),
+            "", sizeof(path_data->content_label));
+
    /* Determine content image name */
    fill_content_img(path_data);
 
